@@ -98,9 +98,6 @@ public class Reflections {
 	public static Annotation findBindingAnnotation(AnnotatedElement element) {
 		for (final var annotation : element.getAnnotations()) {
 			final var annotationType = annotation.annotationType();
-			System.out.println("Checking annotation: " + annotationType);
-			System.out.println("Is binding annotation: " + annotationType.isAnnotationPresent(BindingAnnotation.class));
-			System.out.println("Is qualifier: " + annotationType.isAnnotationPresent(Qualifier.class));
 			if (annotationType.equals(Named.class) ||
 					annotationType.equals(jakarta.inject.Named.class) ||
 					annotationType.isAnnotationPresent(BindingAnnotation.class) ||
