@@ -57,12 +57,9 @@ public class Reflections {
 			if (untypedParameter.getAnnotations().length != 0) {
 				final var bindingAnnotation = findBindingAnnotation(untypedParameter);
 				if (bindingAnnotation != null) {
-					System.out.println("Found binding annotation: " + bindingAnnotation);
 					keys.add(Key.get(typedParameter, bindingAnnotation));
 					continue;
 				}
-
-				System.out.println("No binding annotation found for: " + typedParameter);
 			}
 
 			keys.add(Key.get(typedParameter));
