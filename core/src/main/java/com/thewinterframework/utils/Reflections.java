@@ -79,8 +79,11 @@ public class Reflections {
 
 	public static Type getGenericType(Class<?> clazz, Class<?> interfaze, int index) {
 		for (final var type : clazz.getGenericInterfaces()) {
-			if (type.getTypeName().equals(interfaze.getTypeName())) {
-				return ((ParameterizedType) type).getActualTypeArguments()[index];
+			if (type instanceof ParameterizedType parameterizedType) {
+				final var rawType = parameterizedType.getRawType();
+				if (rawType instanceof Class<?> && interfaze.isAssignableFrom((Class<?>) rawType)) {
+					return parameterizedType.getActualTypeArguments()[index];
+				}
 			}
 		}
 		return null;
