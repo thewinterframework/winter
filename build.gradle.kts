@@ -1,5 +1,19 @@
 plugins {
     id("java")
+    id("maven-publish")
+}
+
+allprojects {
+    apply(plugin = "java")
+    apply(plugin = "maven-publish")
+
+    publishing {
+        publications {
+            create<MavenPublication>("maven") {
+                from(components["java"])
+            }
+        }
+    }
 }
 
 repositories {
