@@ -1,8 +1,91 @@
 [versions]
 junit = "5.9.0"
+# paper
+paper = "1.21.1-R0.1-SNAPSHOT"
+authlib = "1.5.21"
+
+# velocity
+velocity = "3.2.0-SNAPSHOT"
+
+# guava
+guava = "31.1-jre"
+
+# gson
+gson = "2.10.1"
+
+# configurate
+configurate = "4.2.0-SNAPSHOT"
+
+# kyori
+kyori = "4.17.0"
+
+# miniplaceholders
+miniplaceholders = "2.1.0"
+
+# guice
+guice = "7.0.0"
+
+# command framework
+cloud-beta = "2.0.0-beta.9"
+cloud-release = "2.0.0-rc.2"
+cloud-cooldown = "1.0.0-beta.3"
+
+# mongo
+mongo = "3.12.14"
+
+# GUI
+triumph-gui = "3.1.10"
+
+# Caffeine
+caffeine = "3.1.8"
+
 
 [libraries]
 junit-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
 junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+
+# papermc
+paper = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper" }
+
+# velocity
+velocity = { group = "com.velocitypowered", name = "velocity-api", version.ref = "velocity" }
+
+# guava
+guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
+
+# gson
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+# cloud
+cloud-core = { group = "org.incendo", name = "cloud-core", version.ref = "cloud-release" }
+cloud-paper = { group = "org.incendo", name = "cloud-paper", version.ref = "cloud-beta" }
+cloud-velocity = { group = "org.incendo", name = "cloud-velocity", version.ref = "cloud-beta" }
+cloud-annotations = { group = "org.incendo", name = "cloud-annotations", version.ref = "cloud-release" }
+cloud-minecraft-extras = { group = "org.incendo", name = "cloud-minecraft-extras", version.ref = "cloud-beta" }
+cloud-cooldown-processor = { group = "org.incendo", name = "cloud-processors-cooldown", version.ref = "cloud-cooldown" }
+
+# mongo
+mongo = { group = "org.mongodb", name = "mongo-java-driver", version.ref = "mongo" }
+
+# GUI
+triumph-gui = { group = "dev.triumphteam", name = "triumph-gui", version.ref = "triumph-gui" }
+
+# Caffeine
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
+
+# configurate
+configurate = { group = "org.spongepowered", name = "configurate-yaml", version.ref = "configurate" }
+
+# kyori dependencies
+adventure = { group = "net.kyori", name = "adventure-api", version.ref = "kyori" }
+kyori-legacy = { group = "net.kyori", name = "adventure-text-serializer-legacy", version.ref = "kyori" }
+minimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "kyori" }
+kyori-text = { group = "net.kyori", name = "adventure-text-serializer-plain", version.ref = "kyori" }
+
+# miniplaceholders dependencies
+miniplaceholders = { group = "io.github.miniplaceholders", name = "miniplaceholders-api", version.ref = "miniplaceholders" }
+
+# guice
+guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }
 
 [plugins]

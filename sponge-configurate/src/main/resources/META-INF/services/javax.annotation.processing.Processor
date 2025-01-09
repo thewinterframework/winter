@@ -1,0 +1,2 @@
+com.thewinterframework.configurate.serializer.processor.ConfigurateSerializerAnnotationProcessor
+com.thewinterframework.configurate.config.ConfigurateAnnotationProcessor

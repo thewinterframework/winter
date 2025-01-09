@@ -1,0 +1,2 @@
+com.thewinterframework.paper.listener.processor.ListenerComponentProcessor
+com.thewinterframework.paper.yaml.processor.YamlConfigProcessor
