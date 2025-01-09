@@ -4,6 +4,8 @@ import com.thewinterframework.configurate.feedback.Feedback;
 import com.thewinterframework.configurate.feedback.media.FeedbackMedia;
 import com.thewinterframework.configurate.feedback.serializer.FeedbackMediaSpongeSerializer;
 import com.thewinterframework.configurate.feedback.serializer.FeedbackSpongeSerializer;
+import com.thewinterframework.configurate.serializer.common.ComponentSerializer;
+import net.kyori.adventure.text.Component;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
@@ -18,6 +20,7 @@ public class ConfigurateSerializersRegistry {
 	public ConfigurateSerializersRegistry() {
 		serializers.put(Feedback.class, new FeedbackSpongeSerializer());
 		serializers.put(FeedbackMedia.class, new FeedbackMediaSpongeSerializer());
+		serializers.put(Component.class, new ComponentSerializer());
 	}
 
 	public void registerSerializer(Type clazz, TypeSerializer<?> serializer) {
