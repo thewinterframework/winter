@@ -1,5 +1,9 @@
 package com.thewinterframework.configurate.serializer;
 
+import com.thewinterframework.configurate.feedback.Feedback;
+import com.thewinterframework.configurate.feedback.media.FeedbackMedia;
+import com.thewinterframework.configurate.feedback.serializer.FeedbackMediaSpongeSerializer;
+import com.thewinterframework.configurate.feedback.serializer.FeedbackSpongeSerializer;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 import org.spongepowered.configurate.serialize.TypeSerializerCollection;
 
@@ -10,6 +14,11 @@ import java.util.Map;
 public class ConfigurateSerializersRegistry {
 
 	private final Map<Type, TypeSerializer<?>> serializers = new HashMap<>();
+
+	public ConfigurateSerializersRegistry() {
+		serializers.put(Feedback.class, new FeedbackSpongeSerializer());
+		serializers.put(FeedbackMedia.class, new FeedbackMediaSpongeSerializer());
+	}
 
 	public void registerSerializer(Type clazz, TypeSerializer<?> serializer) {
 		serializers.put(clazz, serializer);
