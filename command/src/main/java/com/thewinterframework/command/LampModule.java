@@ -122,9 +122,6 @@ public class LampModule implements PluginModule {
 
 	@Override
 	public boolean onDisable(WinterPlugin plugin) {
-		plugin.getInjector().getInstance(LampInstance.class)
-				.getLamp()
-				.unregisterAllCommands();
 		return true;
 	}
 

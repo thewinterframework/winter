@@ -6,13 +6,21 @@ import com.google.inject.AbstractModule;
 import com.thewinterframework.configurate.Container;
 import com.thewinterframework.configurate.serializer.ConfigurateSerializersRegistry;
 import com.thewinterframework.plugin.DataFolder;
+import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModule;
 import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 public class ConfigurationsModule extends AbstractModule implements PluginModule {
+
+	@Override
+	public List<Class<? extends PluginModule>> depends(WinterPlugin plugin) {
+		return List.of(com.thewinterframework.configurate.module.ConfigurateModule.class);
+	}
+
 	<el>
 	@Provides
 	@Singleton

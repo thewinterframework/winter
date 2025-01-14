@@ -30,24 +30,17 @@ public class ConfigurateModule implements PluginModule {
 	public boolean onLoad(WinterPlugin plugin) {
 		try {
 			final var serializers = ConfigurateSerializerAnnotationProcessor.scan(plugin.getClass(), ConfigurateSerializer.class).getClassList();
-			for (final var clazz : serializers) {
-				final var serializer = (Class<? extends TypeSerializer<?>>) clazz;
-				discoveredSerializers.add(serializer);
+
+			for (final var discoveredSerializer : serializers) {
+				final var serializer = (Class<? extends TypeSerializer<?>>) discoveredSerializer;
+
+				final var instance = discoveredSerializer.newInstance();
+				final var type = Reflections.getGenericType(discoveredSerializer, TypeSerializer.class, 0);
+				configurateSerializersRegistry.registerSerializer(type, (TypeSerializer<?>) instance);
 			}
 		} catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
 			plugin.getSLF4JLogger().error("Failed to scan for module components", e);
 			throw new RuntimeException(e);
-		}
-
-		return true;
-	}
-
-	@Override
-	public boolean onEnable(WinterPlugin plugin) {
-		for (final var discoveredSerializer : discoveredSerializers) {
-			final var serializer = plugin.getInjector().getInstance(discoveredSerializer);
-			final var type = Reflections.getGenericType(discoveredSerializer, TypeSerializer.class, 0);
-			configurateSerializersRegistry.registerSerializer(type, serializer);
 		}
 
 		return true;
