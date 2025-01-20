@@ -5,6 +5,9 @@ import com.thewinterframework.service.meta.scheduler.SchedulerMethod;
 
 import java.util.List;
 
+/**
+ * Represents the metadata of a service.
+ */
 public record ServiceMeta(
 		Class<?> clazz,
 		List<LifeCycleMethod> onEnableMethods,

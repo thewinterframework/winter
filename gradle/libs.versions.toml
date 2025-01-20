@@ -2,7 +2,6 @@
 junit = "5.9.0"
 # paper
 paper = "1.21.1-R0.1-SNAPSHOT"
-authlib = "1.5.21"
 
 # velocity
 velocity = "3.2.0-SNAPSHOT"
@@ -47,9 +46,6 @@ junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 # papermc
 paper = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper" }
 
-# velocity
-velocity = { group = "com.velocitypowered", name = "velocity-api", version.ref = "velocity" }
-
 # guava
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }
 
@@ -81,9 +77,6 @@ adventure = { group = "net.kyori", name = "adventure-api", version.ref = "kyori"
 kyori-legacy = { group = "net.kyori", name = "adventure-text-serializer-legacy", version.ref = "kyori" }
 minimessage = { group = "net.kyori", name = "adventure-text-minimessage", version.ref = "kyori" }
 kyori-text = { group = "net.kyori", name = "adventure-text-serializer-plain", version.ref = "kyori" }
-
-# miniplaceholders dependencies
-miniplaceholders = { group = "io.github.miniplaceholders", name = "miniplaceholders-api", version.ref = "miniplaceholders" }
 
 # guice
 guice = { group = "com.google.inject", name = "guice", version.ref = "guice" }

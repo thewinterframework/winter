@@ -2,6 +2,9 @@ package com.thewinterframework.number;
 
 import java.text.DecimalFormat;
 
+/**
+ * Utility methods for numbers.
+ */
 public class NumberUtils {
 
 	/**

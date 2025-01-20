@@ -6,6 +6,9 @@ import com.thewinterframework.plugin.WinterPlugin;
 
 import java.util.List;
 
+/**
+ * This class should be extended by any module that is used by the WinterBoot plugin.
+ */
 public interface PluginModule extends Module {
 
 	default List<Class<? extends PluginModule>> depends(WinterPlugin plugin) {
@@ -22,11 +25,21 @@ public interface PluginModule extends Module {
 		return true;
 	}
 
+	/**
+	 * Called when the plugin is enabled
+	 * <br><b>NOTE: Plugin injections is available at this point</b>
+	 * @param plugin the plugin instance which is enabled
+	 */
 	default boolean onEnable(WinterPlugin plugin) {
 		// Override this handle if you want to do something on plugin enable
 		return true;
 	}
 
+	/**
+	 * Called when the plugin is disabled
+	 * <br><b>NOTE: Plugin injections is available at this point</b>
+	 * @param plugin the plugin instance which is disabled
+	 */
 	default boolean onDisable(WinterPlugin plugin) {
 		// Override this handle if you want to do something on plugin disable
 		return true;

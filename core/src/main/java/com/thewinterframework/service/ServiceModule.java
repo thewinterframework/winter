@@ -10,6 +10,10 @@ import com.thewinterframework.service.meta.lifecycle.LifeCycleMethod;
 
 import java.util.stream.Collectors;
 
+/**
+ * Module for services.
+ * <p> This module scans for classes annotated with {@link Service} and binds them to the injector. </p>
+ */
 public class ServiceModule implements PluginModule {
 
 	private final ServiceManager serviceManager = new ServiceManager();

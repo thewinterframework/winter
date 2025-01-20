@@ -19,6 +19,9 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import java.util.*;
 
+/**
+ * <p> This class is responsible for managing services. </p>
+ */
 public class ServiceManager {
 
 	private final Map<Class<?>, ServiceMeta> metaByService = new HashMap<>();
@@ -92,10 +95,21 @@ public class ServiceManager {
 		}
 	}
 
+	/**
+	 * Enable the services.
+	 *
+	 * @param injector The injector to use.
+	 * @return The result of the operation.
+	 */
 	public HandleServicesResult enableServices(Injector injector) {
 		return handleServices(injector, onEnableGraph);
 	}
 
+	/**
+	 * Start the schedulers.
+	 *
+	 * @param plugin The plugin to use.
+	 */
 	public void startSchedulers(WinterPlugin plugin) {
 		for (final var serviceMeta : metaByService.values()) {
 			for (final var schedulerMethod : serviceMeta.schedulerMethods()) {
@@ -104,16 +118,34 @@ public class ServiceManager {
 		}
 	}
 
+	/**
+	 * Stop the tasks.
+	 *
+	 * @param plugin The plugin to use.
+	 */
 	public void stopTasks(WinterPlugin plugin) {
 		for (final var schedulerId : schedulersIds) {
 			plugin.cancelTask(schedulerId);
 		}
 	}
 
+	/**
+	 * Disable the services.
+	 *
+	 * @param injector The injector to use.
+	 * @return The result of the operation.
+	 */
 	public HandleServicesResult disableServices(Injector injector) {
 		return handleServices(injector, onDisableGraph);
 	}
 
+	/**
+	 * Handle the services.
+	 *
+	 * @param injector The injector to use.
+	 * @param graph    The graph to use.
+	 * @return The result of the operation.
+	 */
 	private static HandleServicesResult handleServices(final Injector injector, final Graph<LifeCycleMethod, DefaultEdge> graph) {
 		final var cycleDetector = new CycleDetector<>(graph);
 		if (cycleDetector.detectCycles()) {
@@ -134,8 +166,16 @@ public class ServiceManager {
 		return new HandleServicesResult(true, Set.of(), null);
 	}
 
+	/**
+	 * The result of handling services.
+	 */
 	public record HandleServicesResult(boolean result, Set<LifeCycleMethod> cycles, @Nullable Throwable throwable) {}
 
+	/**
+	 * Get the services.
+	 *
+	 * @return The services.
+	 */
 	public Collection<ServiceMeta> services() {
 		return metaByService.values();
 	}

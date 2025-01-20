@@ -50,23 +50,6 @@ public class ComponentUtils {
 	private final static Map<Class<?>, ComponentResolver<?>> COMPONENT_RESOLVERS = new HashMap<>();
 
 	/**
-	 * Parses a MiniMessage string into a component.
-	 *
-	 * @param message      The message to parse.
-	 * @param tagResolvers The tag resolvers to use.
-	 * @return The parsed component.
-	 */
-	public static Component miniMessage(final @NotNull String message, final @NotNull TagResolver... tagResolvers) {
-		return MINI_MESSAGE.deserialize(
-				message,
-				TagResolver.builder()
-						.resolvers(GLOBAL_TAG_RESOLVERS)
-						.resolvers(tagResolvers)
-						.build()
-		);
-	}
-
-	/**
 	 * Adds a global tag resolver.
 	 *
 	 * @param tagResolver The tag resolver to add.
@@ -97,6 +80,48 @@ public class ComponentUtils {
 	}
 
 	/**
+	 * Serializes multiple components into MiniMessage strings.
+	 *
+	 * @param components The components to serialize.
+	 * @return The serialized MiniMessage strings.
+	 */
+	public static List<String> miniMessage(final @NotNull List<Component> components) {
+		return components.stream()
+				.map(ComponentUtils::miniMessage)
+				.toList();
+	}
+
+	/**
+	 * Parses a MiniMessage string into a component.
+	 *
+	 * @param message      The message to parse.
+	 * @param tagResolvers The tag resolvers to use.
+	 * @return The parsed component.
+	 */
+	public static Component miniMessage(final @NotNull String message, final @NotNull TagResolver... tagResolvers) {
+		return MINI_MESSAGE.deserialize(
+				message,
+				TagResolver.builder()
+						.resolvers(GLOBAL_TAG_RESOLVERS)
+						.resolvers(tagResolvers)
+						.build()
+		);
+	}
+
+	/**
+	 * Parses multiple MiniMessage strings into components.
+	 *
+	 * @param messages     The messages to parse.
+	 * @param tagResolvers The tag resolvers to use.
+	 * @return The parsed components.
+	 */
+	public static List<Component> miniMessage(final @NotNull List<String> messages, final @NotNull TagResolver... tagResolvers) {
+		return messages.stream()
+				.map(line -> miniMessage(line, tagResolvers))
+				.toList();
+	}
+
+	/**
 	 * Serializes a string into a legacy section string.
 	 * This is a string where color codes are prefixed with §.
 	 * For example, §cHello §fworld.
@@ -106,6 +131,18 @@ public class ComponentUtils {
 	 */
 	public static Component legacySection(final @NotNull String message) {
 		return LEGACY_SECTION_COMPONENT_SERIALIZER.deserialize(message);
+	}
+
+	/**
+	 * Serializes multiple strings into legacy section components.
+	 *
+	 * @param messages The messages to serialize.
+	 * @return The serialized legacy section components.
+	 */
+	public static List<Component> legacySection(final @NotNull List<String> messages) {
+		return messages.stream()
+				.map(ComponentUtils::legacySection)
+				.toList();
 	}
 
 	/**
@@ -133,6 +170,18 @@ public class ComponentUtils {
 	}
 
 	/**
+	 * Serializes multiple strings into legacy ampersand components.
+	 *
+	 * @param messages The messages to serialize.
+	 * @return The serialized legacy ampersand components.
+	 */
+	public static List<Component> legacyAmpersand(final @NotNull List<String> messages) {
+		return messages.stream()
+				.map(ComponentUtils::legacyAmpersand)
+				.toList();
+	}
+
+	/**
 	 * Serializes a component into a legacy ampersand string.
 	 * This is a string where color codes are prefixed with &.
 	 * For example, &cHello &fworld.
@@ -153,6 +202,18 @@ public class ComponentUtils {
 	 */
 	public static String plainText(final @NotNull Component component) {
 		return PLAIN_TEXT_COMPONENT_SERIALIZER.serialize(component);
+	}
+
+	/**
+	 * Serializes multiple components into plain text strings.
+	 *
+	 * @param components The components to serialize.
+	 * @return The serialized plain text components.
+	 */
+	public static List<String> plainText(final @NotNull List<Component> components) {
+		return components.stream()
+				.map(ComponentUtils::plainText)
+				.toList();
 	}
 
 	/**

@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
+/**
+ * Annotation processor for {@link Service}.
+ */
 public class ServiceAnnotationProcessor extends ClassListProviderAnnotationProcessor {
 
 	@Override

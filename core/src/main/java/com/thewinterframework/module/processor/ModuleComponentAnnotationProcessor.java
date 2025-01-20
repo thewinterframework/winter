@@ -10,6 +10,9 @@ import javax.lang.model.element.Element;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
+/**
+ * Annotation processor for {@link ModuleComponent}.
+ */
 public class ModuleComponentAnnotationProcessor extends ClassListProviderAnnotationProcessor {
 	@Override
 	protected boolean filterClass(Element element) {

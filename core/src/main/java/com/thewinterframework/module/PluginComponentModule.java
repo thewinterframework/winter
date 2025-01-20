@@ -11,6 +11,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Module for plugin components.
+ * <p> This module scans for classes annotated with {@link ModuleComponent} and binds them to the injector. </p>
+ */
 public class PluginComponentModule implements PluginModule {
 	@Override
 	public List<Class<? extends PluginModule>> depends(WinterPlugin plugin) {

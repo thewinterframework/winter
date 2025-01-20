@@ -5,8 +5,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a method to be executed when the service is enabled.
+ */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface OnEnable {
+
+
+	/**
+	 * The priority of this method. The higher the priority, the earlier it will be executed
+	 * @return The priority of this method
+	 */
 	Class<?>[] after() default {};
 }

@@ -17,14 +17,39 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for reflection operations.
+ */
 public class Reflections {
 
+	/**
+	 * Represents a method handle annotated with a specific annotation.
+	 *
+	 * @param <T> The annotation type.
+	 */
 	public record AnnotatedMethodHandle<T>(MethodHandle handle, T annotation, List<Key<?>> parameters) {
+		/**
+		 * Invokes the method handle with the given parameters.
+		 *
+		 * @param clazz The class to invoke the method on.
+		 * @param injector The injector to get the instances from.
+		 * @throws Throwable If an error occurs while invoking the method.
+		 */
 		public void invoke(Class<?> clazz, Injector injector) throws Throwable {
 			handle.invokeWithArguments(injectKeys(clazz, parameters, injector));
 		}
 	}
 
+	/**
+	 * Finds all methods in a class that are annotated with a specific annotation.
+	 *
+	 * @param clazz The class to search in.
+	 * @param annotation The annotation to search for.
+	 * @param <T> The annotation type.
+	 * @return A list of annotated method handles.
+	 * @throws IllegalAccessException If the method cannot be accessed.
+	 * @throws NoSuchMethodException If the method does not exist.
+	 */
 	public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(Class<?> clazz, Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
 		final var list = new ArrayList<AnnotatedMethodHandle<T>>();
 		for (final var method : clazz.getDeclaredMethods()) {
@@ -45,6 +70,12 @@ public class Reflections {
 		return list;
 	}
 
+	/**
+	 * Finds the parameters of a method.
+	 *
+	 * @param method The method to find the parameters of.
+	 * @return A list of keys representing the parameters.
+	 */
 	public static List<Key<?>> findMethodParameters(Method method) {
 		final var parameters = method.getGenericParameterTypes();
 		final var typeParameters = method.getParameters();
@@ -68,6 +99,14 @@ public class Reflections {
 		return keys;
 	}
 
+	/**
+	 * Injects the keys into the injector and returns the objects.
+	 *
+	 * @param instance The instance to inject the keys into.
+	 * @param keys The keys to inject.
+	 * @param injector The injector to get the instances from.
+	 * @return The objects.
+	 */
 	public static Object[] injectKeys(Class<?> instance, List<Key<?>> keys, Injector injector) {
 		final var objects = new Object[keys.size() + 1];
 		objects[0] = injector.getInstance(instance);
@@ -77,6 +116,14 @@ public class Reflections {
 		return objects;
 	}
 
+	/**
+	 * Gets the generic type of class that implements an interface.
+	 *
+	 * @param clazz The class to get the generic type from.
+	 * @param interfaze The interface to get the generic type from.
+	 * @param index The index of the generic type.
+	 * @return The generic type.
+	 */
 	public static Type getGenericType(Class<?> clazz, Class<?> interfaze, int index) {
 		for (final var type : clazz.getGenericInterfaces()) {
 			if (type instanceof ParameterizedType parameterizedType) {
@@ -89,6 +136,12 @@ public class Reflections {
 		return null;
 	}
 
+	/**
+	 * Converts a type to a class.
+	 *
+	 * @param type The type to convert.
+	 * @return The class.
+	 */
 	public static Class<?> toClass(Type type) {
 		if (type instanceof Class) {
 			return (Class<?>) type;
@@ -98,6 +151,12 @@ public class Reflections {
 		throw new IllegalArgumentException("Unsupported type: " + type);
 	}
 
+	/**
+	 * Finds the binding annotation of an element.
+	 *
+	 * @param element The element to find the binding annotation of.
+	 * @return The binding annotation.
+	 */
 	public static Annotation findBindingAnnotation(AnnotatedElement element) {
 		for (final var annotation : element.getAnnotations()) {
 			final var annotationType = annotation.annotationType();

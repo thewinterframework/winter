@@ -15,6 +15,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * <p> This class is responsible for scanning, registering, loading, enabling, and disabling plugin modules. </p>
+ */
 public class PluginModuleManager implements Iterable<Class<? extends PluginModule>> {
 
 	private final WinterPlugin plugin;
@@ -28,6 +31,11 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		this.moduleGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
 	}
 
+	/**
+	 * Scans the modules for the plugin.
+	 *
+	 * @return {@code true} if the modules were scanned successfully, {@code false} otherwise.
+	 */
 	public boolean scanModules() {
 		if (alreadyLoaded) {
 			return false;
@@ -50,6 +58,12 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		}
 	}
 
+	/**
+	 * Registers the given module.
+	 *
+	 * @param module the module to register.
+	 * @return {@code true} if the module was registered successfully, {@code false} otherwise.
+	 */
 	public boolean registerModule(final Class<? extends PluginModule> module) {
 		if (alreadyLoaded) {
 			return false;
@@ -78,6 +92,11 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		return true;
 	}
 
+	/**
+	 * Loads the registered modules.
+	 *
+	 * @return {@code true} if the modules were loaded successfully, {@code false} otherwise.
+	 */
 	public boolean loadModules() {
 		final var start = System.currentTimeMillis();
 		final var cycleDetector = new CycleDetector<>(moduleGraph);
@@ -109,6 +128,11 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		return true;
 	}
 
+	/**
+	 * Injects the modules.
+	 *
+	 * @return {@code true} if the modules were injected successfully, {@code false} otherwise.
+	 */
 	public boolean injectModules() {
 		if (!alreadyLoaded) {
 			return false;
@@ -131,6 +155,11 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		return true;
 	}
 
+	/**
+	 * Enables the modules.
+	 *
+	 * @return {@code true} if the modules were enabled successfully, {@code false} otherwise.
+	 */
 	public boolean enableModules() {
 		if (!alreadyLoaded) {
 			return false;
@@ -158,6 +187,11 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		return true;
 	}
 
+	/**
+	 * Disables the modules.
+	 *
+	 * @return {@code true} if the modules were disabled successfully, {@code false} otherwise.
+	 */
 	public boolean disableModules() {
 		if (!alreadyLoaded) {
 			return false;
@@ -186,15 +220,32 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		return true;
 	}
 
+	/**
+	 * Checks if the given module is registered.
+	 *
+	 * @param clazz the module class to check.
+	 * @return {@code true} if the module is registered, {@code false} otherwise.
+	 */
 	public boolean isRegistered(Class<? extends PluginModule> clazz) {
 		return registeredModules.containsKey(clazz);
 	}
 
+	/**
+	 * Gets the module of the given class.
+	 *
+	 * @param clazz the module class to get.
+	 * @param <T>   the type of the module.
+	 * @return the module of the given class, or {@code null} if the module is not registered.
+	 */
 	@Nullable
 	public <T extends PluginModule> T getModule(Class<T> clazz) {
 		return clazz.cast(registeredModules.get(clazz));
 	}
 
+	/**
+	 * Gets the registered modules.
+	 * @return the registered modules.
+	 */
 	public Set<Module> asGuiceModules() {
 		return Set.copyOf(registeredModules.values());
 	}
@@ -205,6 +256,13 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		return new TopologicalOrderIterator<>(moduleGraph);
 	}
 
+	/**
+	 * Creates an instance of the given class.
+	 *
+	 * @param clazz the class to create an instance of.
+	 * @param <T>   the type of the class.
+	 * @return an instance of the given class.
+	 */
 	private <T> T createInstance(Class<T> clazz) {
 		try {
 			return clazz.getDeclaredConstructor().newInstance();
