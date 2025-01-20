@@ -6,6 +6,8 @@ import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModuleManager;
 import com.thewinterframework.utils.TimeUnit;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.key.KeyPattern;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -107,5 +109,12 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 
 	protected Stage getGuiceStage() {
 		return Stage.PRODUCTION;
+	}
+
+	@Override
+	@KeyPattern.Namespace
+	@SuppressWarnings("all") // lol
+	public @NotNull String namespace() {
+		return this.getName().toLowerCase();
 	}
 }

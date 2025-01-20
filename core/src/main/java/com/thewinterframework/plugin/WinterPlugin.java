@@ -5,12 +5,14 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.thewinterframework.plugin.module.PluginModuleManager;
 import com.thewinterframework.utils.TimeUnit;
+import net.kyori.adventure.key.Keyed;
+import net.kyori.adventure.key.Namespaced;
 import org.slf4j.Logger;
 
 /**
  * This class should be extended by any plugin that is used by the WinterBoot plugin.
  */
-public interface WinterPlugin extends Module {
+public interface WinterPlugin extends Module, Namespaced {
 
 	@Override
 	default void configure(Binder binder) {
