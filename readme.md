@@ -14,6 +14,7 @@ plugins {
 
 dependencies {
     api("com.thewinterframework:[PLATFORM]:[VERSION]")
+    annotationProcessor("com.thewinterframework:[PLATFORM]:[VERSION]") // THIS IS HIGHLY IMPORTANT
 }
 ```
 
