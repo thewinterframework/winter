@@ -13,8 +13,7 @@ import java.lang.annotation.Target;
 public @interface OnDisable {
 
 	/**
-	 * This indicates the priority of the method. <br>
-	 *
+	 * This indicates the priority of the method.
 	 * @return The classes to call before this method
 	 */
 	Class<?>[] before() default {};

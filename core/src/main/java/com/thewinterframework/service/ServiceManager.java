@@ -4,9 +4,12 @@ import com.google.inject.Injector;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.service.annotation.lifecycle.OnDisable;
 import com.thewinterframework.service.annotation.lifecycle.OnEnable;
+import com.thewinterframework.service.annotation.lifecycle.OnReload;
 import com.thewinterframework.service.annotation.scheduler.RepeatingTask;
 import com.thewinterframework.service.meta.ServiceMeta;
 import com.thewinterframework.service.meta.lifecycle.LifeCycleMethod;
+import com.thewinterframework.service.meta.lifecycle.ReflectLifeCycleMethod;
+import com.thewinterframework.service.meta.lifecycle.RunnableLifeCycleMethod;
 import com.thewinterframework.service.meta.scheduler.RepeatingTaskMethod;
 import com.thewinterframework.utils.Reflections;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +31,7 @@ public class ServiceManager {
 
 	private final Graph<LifeCycleMethod, DefaultEdge> onEnableGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
 	private final Graph<LifeCycleMethod, DefaultEdge> onDisableGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+	private final Graph<LifeCycleMethod, DefaultEdge> onReloadGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
 	private final List<Integer> schedulersIds = new ArrayList<>();
 
 	/**
@@ -38,12 +42,19 @@ public class ServiceManager {
 	public void registerService(final @NotNull Class<?> service) throws IllegalAccessException, NoSuchMethodException {
 		final var onEnableMethods = Reflections.findMethodsWith(service, OnEnable.class)
 				.stream()
-				.map(annotatedMethodHandle -> new LifeCycleMethod(service, annotatedMethodHandle, new Class[]{}, annotatedMethodHandle.annotation().after()))
+				.map(annotatedMethodHandle -> new ReflectLifeCycleMethod(service, annotatedMethodHandle, new Class[]{}, annotatedMethodHandle.annotation().after()))
 				.toList();
+
 		final var onDisableMethods = Reflections.findMethodsWith(service, OnDisable.class)
 				.stream()
-				.map(annotatedMethodHandle -> new LifeCycleMethod(service, annotatedMethodHandle, annotatedMethodHandle.annotation().before(), new Class[]{}))
+				.map(annotatedMethodHandle -> new ReflectLifeCycleMethod(service, annotatedMethodHandle, annotatedMethodHandle.annotation().before(), new Class[]{}))
 				.toList();
+
+		final var onReloadMethods = Reflections.findMethodsWith(service, OnReload.class)
+				.stream()
+				.map(annotatedMethodHandle -> new ReflectLifeCycleMethod(service, annotatedMethodHandle, annotatedMethodHandle.annotation().before(), annotatedMethodHandle.annotation().after()))
+				.toList();
+
 		final var repeatingTaskMethods = Reflections.findMethodsWith(service, RepeatingTask.class)
 				.stream()
 				.map(annotatedMethodHandle ->
@@ -58,8 +69,18 @@ public class ServiceManager {
 				)
 				.toList();
 
-		final var serviceMeta = new ServiceMeta(service, onEnableMethods, onDisableMethods, repeatingTaskMethods);
+		final var serviceMeta = new ServiceMeta(service, onEnableMethods, onDisableMethods, onReloadMethods, repeatingTaskMethods);
 		metaByService.put(service, serviceMeta);
+	}
+
+	/**
+	 * Add a runnable to the on reload graph.
+	 *
+	 * @param service The service to add the runnable to.
+	 * @param method  The method to add.
+	 */
+	public void addReloadMethod(final @NotNull Class<?> service, final @NotNull Runnable method) {
+		onReloadGraph.addVertex(new RunnableLifeCycleMethod(service, method, new Class[]{}, new Class[]{}));
 	}
 
 	/**
@@ -92,7 +113,38 @@ public class ServiceManager {
 							});
 				}
 			}
+
+			for (final var onReloadMethod : serviceMeta.onReloadMethods()) {
+				onReloadGraph.addVertex(onReloadMethod);
+
+				for (final var dependency : onReloadMethod.before()) {
+					metaByService.get(dependency)
+							.onReloadMethods()
+							.forEach(dependencyMethod -> {
+								onReloadGraph.addVertex(dependencyMethod); // if the dependency is not registered, it will be added to the graph
+								onReloadGraph.addEdge(dependencyMethod, onReloadMethod);
+							});
+				}
+
+				for (final var dependency : onReloadMethod.after()) {
+					metaByService.get(dependency)
+							.onReloadMethods()
+							.forEach(dependencyMethod -> {
+								onReloadGraph.addVertex(dependencyMethod); // if the dependency is not registered, it will be added to the graph
+								onReloadGraph.addEdge(onReloadMethod, dependencyMethod);
+							});
+				}
+			}
 		}
+	}
+
+	/**
+	 * Reload the services.
+	 *
+	 * @param injector The injector to use.
+	 */
+	public HandleServicesResult reloadServices(Injector injector) {
+		return handleServices(injector, onReloadGraph);
 	}
 
 	/**
@@ -156,8 +208,12 @@ public class ServiceManager {
 		try {
 			while (iterator.hasNext()) {
 				final var meta = iterator.next();
-				final var method = meta.method();
-				method.invoke(meta.service(), injector);
+				if (meta instanceof ReflectLifeCycleMethod reflectLifeCycleMethod) {
+					final var method = reflectLifeCycleMethod.method();
+					method.invoke(reflectLifeCycleMethod.service(), injector);
+				} else if (meta instanceof RunnableLifeCycleMethod runnableLifeCycleMethod) {
+					runnableLifeCycleMethod.method().run();
+				}
 			}
 		} catch (Throwable throwable) {
 			return new HandleServicesResult(false, Set.of(), throwable);

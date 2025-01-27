@@ -6,6 +6,7 @@ import com.thewinterframework.module.processor.ModuleComponentAnnotationProcesso
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModule;
 import com.thewinterframework.service.annotation.Service;
+import com.thewinterframework.service.meta.ServiceMeta;
 import com.thewinterframework.service.meta.lifecycle.LifeCycleMethod;
 
 import java.util.stream.Collectors;
@@ -21,6 +22,8 @@ public class ServiceModule implements PluginModule {
 	@Override
 	public void configure(Binder binder) {
 		binder.bindScope(Service.class, Scopes.SINGLETON);
+		binder.bind(ServiceManager.class).toInstance(serviceManager);
+		binder.bind(ReloadServiceManager.class).in(Scopes.SINGLETON);
 	}
 
 	@Override

@@ -10,7 +10,8 @@ import java.util.List;
  */
 public record ServiceMeta(
 		Class<?> clazz,
-		List<LifeCycleMethod> onEnableMethods,
-		List<LifeCycleMethod> onDisableMethods,
+		List<? extends LifeCycleMethod> onEnableMethods,
+		List<? extends LifeCycleMethod> onDisableMethods,
+		List<? extends LifeCycleMethod> onReloadMethods,
 		List<? extends SchedulerMethod> schedulerMethods
 ) {}
