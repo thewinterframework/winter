@@ -20,8 +20,7 @@ import java.util.List;
 
 public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlugin {
 
-	private final PluginModuleManager moduleManager = new PluginModuleManager(this);
-
+	protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
 	protected @Inject Injector injector;
 
 	@Override
