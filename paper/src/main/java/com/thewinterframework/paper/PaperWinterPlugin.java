@@ -38,7 +38,7 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	@Override
 	public final void onEnable() {
 		final var startTime = System.currentTimeMillis();
-		final var injector = Guice.createInjector(getGuiceStage(), getGuiceModules());
+		final var injector = createInjector();
 		injector.injectMembers(this);
 
 		if (!moduleManager.injectModules() || !moduleManager.enableModules()) {
@@ -47,6 +47,10 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 
 		onPluginEnable();
 		getSLF4JLogger().info("Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
+	}
+
+	protected Injector createInjector() {
+		return Guice.createInjector(getGuiceStage(), getGuiceModules());
 	}
 
 	@Override
