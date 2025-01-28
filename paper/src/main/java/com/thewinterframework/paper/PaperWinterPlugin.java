@@ -95,7 +95,7 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 		return moduleManager;
 	}
 
-	private List<Module> getGuiceModules() {
+	protected List<Module> getGuiceModules() {
 		final var modules = new ArrayList<Module>();
 		modules.add(binder -> {
 			binder.bind(WinterPlugin.class).toInstance(this);
