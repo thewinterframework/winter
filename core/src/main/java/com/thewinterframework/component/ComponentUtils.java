@@ -159,8 +159,7 @@ public class ComponentUtils {
 
 	/**
 	 * Serializes a string into a legacy ampersand string.
-	 * This is a string where color codes are prefixed with &.
-	 * For example, &cHello &fworld.
+	 * This is a string where color codes are prefixed with ampersand.
 	 *
 	 * @param message The message to serialize.
 	 * @return The serialized legacy ampersand component.
@@ -183,8 +182,7 @@ public class ComponentUtils {
 
 	/**
 	 * Serializes a component into a legacy ampersand string.
-	 * This is a string where color codes are prefixed with &.
-	 * For example, &cHello &fworld.
+	 * This is a string where color codes are prefixed with ampersand.
 	 *
 	 * @param component The component to serialize.
 	 * @return The serialized legacy ampersand component.

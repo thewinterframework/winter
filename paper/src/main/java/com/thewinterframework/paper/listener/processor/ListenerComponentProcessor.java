@@ -10,6 +10,9 @@ import javax.lang.model.element.Element;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
+/**
+ * A processor that provides a list of listener components.
+ */
 public class ListenerComponentProcessor extends ClassListProviderAnnotationProcessor {
 	@Override
 	protected boolean filterClass(Element element) {

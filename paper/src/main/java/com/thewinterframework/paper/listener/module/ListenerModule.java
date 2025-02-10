@@ -14,6 +14,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A module that handles listener components.
+ */
 public class ListenerModule implements PluginModule {
 
 	private final Set<Class<? extends Listener>> discoveredListeners = new HashSet<>();

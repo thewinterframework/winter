@@ -13,6 +13,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * A processor that generates a module for YAML configuration files.
+ */
 public class YamlConfigProcessor extends FieldAnnotationProcessor {
 
 	public static final Pattern ELEMENT_PATTERN = Pattern.compile("(?:<el>)([\\s\\S]*)(?:<\\/el>)");

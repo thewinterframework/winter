@@ -40,8 +40,6 @@ import java.time.temporal.TemporalUnit;
  * just with slightly different rules.
  * The documentation of each unit explains how it operates.
  *
- * @implSpec
- * This is a final, immutable and thread-safe enum.
  *
  * @since 1.00
  *

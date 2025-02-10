@@ -18,6 +18,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A base class for Winter plugins that use Paper.
+ */
 public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlugin {
 
 	protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
