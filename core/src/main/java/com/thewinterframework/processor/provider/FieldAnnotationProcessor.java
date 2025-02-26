@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public abstract class FieldAnnotationProcessor extends AbstractWinterAnnotationProcessor {
 
 	@Override
-	protected void process(Element pluginClass, Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+	protected boolean process(Element pluginClass, Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		for (final var annotation : annotations) {
 			final var fields = roundEnv.getElementsAnnotatedWith(annotation).stream()
 					.filter(this::isField)
@@ -24,6 +24,8 @@ public abstract class FieldAnnotationProcessor extends AbstractWinterAnnotationP
 
 			processFields(pluginClass, fields, roundEnv);
 		}
+
+		return true;
 	}
 
 	/**

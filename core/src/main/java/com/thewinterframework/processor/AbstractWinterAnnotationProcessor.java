@@ -4,6 +4,7 @@ import com.thewinterframework.plugin.WinterBootPlugin;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModule;
 import com.thewinterframework.utils.Tuple;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.processing.*;
@@ -80,8 +81,7 @@ public abstract class AbstractWinterAnnotationProcessor extends AbstractProcesso
 			});
 		}
 
-		process(pluginClass, filteredAnnotations, roundEnv);
-		return true;
+		return process(pluginClass, filteredAnnotations, roundEnv);
 	}
 
 	/**
@@ -89,8 +89,9 @@ public abstract class AbstractWinterAnnotationProcessor extends AbstractProcesso
 	 * @param pluginClass The plugin class.
 	 * @param annotations The annotations.
 	 * @param roundEnv The round environment.
+	 * @return Whether the set of annotation interfaces are claimed by this processor
 	 */
-	protected abstract void process(Element pluginClass, Set<? extends TypeElement> annotations, RoundEnvironment roundEnv);
+	protected abstract boolean process(Element pluginClass, Set<? extends TypeElement> annotations, RoundEnvironment roundEnv);
 
 	/**
 	 * Returns the module class required by the plugin.
