@@ -89,6 +89,15 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 			moduleGraph.addEdge(registeredModule.getClass(), dependency);
 		}
 
+		for (final var before : registeredModule.before(plugin)) {
+			if (!registerModule(before)) {
+				plugin.getSLF4JLogger().error("Failed to register module {} before module {}", before.getCanonicalName(), module.getCanonicalName());
+				return false;
+			}
+
+			moduleGraph.addEdge(before, registeredModule.getClass());
+		}
+
 		return true;
 	}
 

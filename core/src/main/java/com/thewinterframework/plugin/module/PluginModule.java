@@ -11,7 +11,21 @@ import java.util.List;
  */
 public interface PluginModule extends Module {
 
+	/**
+	 * List of modules that this module depends on
+	 * @param plugin the plugin instance which is loaded
+	 * @return list of modules that this module depends on, and will be loaded before this module
+	 */
 	default List<Class<? extends PluginModule>> depends(WinterPlugin plugin) {
+		return List.of();
+	}
+
+	/**
+	 * List of modules that this module should be loaded before them
+	 * @param plugin the plugin instance which is loaded
+	 * @return list of modules that this module should be loaded before them
+	 */
+	default List<Class<? extends PluginModule>> before(WinterPlugin plugin) {
 		return List.of();
 	}
 
