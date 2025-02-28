@@ -1,3 +1,7 @@
+[![Maven Central](https://img.shields.io/maven-central/v/com.thewinterframework/core
+)](https://central.sonatype.com/artifact/com.thewinterframework/core)
+
+
 # ❄️  The Winter Framework ❄️ 
 A Modern, heavily inspired by [Spring Boot](https://github.com/spring-projects/spring-boot) and easy-to-use plugin framework for Minecraft Server Software
 
