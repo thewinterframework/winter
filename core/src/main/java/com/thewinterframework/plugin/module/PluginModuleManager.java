@@ -8,7 +8,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.traverse.TopologicalOrderIterator;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -86,7 +86,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 				return false;
 			}
 
-			moduleGraph.addEdge(registeredModule.getClass(), dependency);
+			moduleGraph.addEdge(module, dependency);
 		}
 
 		for (final var before : registeredModule.before(plugin)) {
@@ -95,7 +95,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 				return false;
 			}
 
-			moduleGraph.addEdge(before, registeredModule.getClass());
+			moduleGraph.addEdge(before, module);
 		}
 
 		return true;
@@ -115,7 +115,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 			return false;
 		}
 
-		final var iterator = new TopologicalOrderIterator<>(moduleGraph);
+		final var iterator = new DepthFirstIterator<>(moduleGraph);
 		while (iterator.hasNext()) {
 			final var moduleClass = iterator.next();
 			final var module = registeredModules.get(moduleClass);
@@ -148,7 +148,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		}
 
 		final var start = System.currentTimeMillis();
-		final var iterator = new TopologicalOrderIterator<>(moduleGraph);
+		final var iterator = new DepthFirstIterator<>(moduleGraph);
 		while (iterator.hasNext()) {
 			final var moduleClass = iterator.next();
 			final var module = registeredModules.get(moduleClass);
@@ -175,7 +175,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		}
 
 		final var start = System.currentTimeMillis();
-		final var iterator = new TopologicalOrderIterator<>(moduleGraph);
+		final var iterator = new DepthFirstIterator<>(moduleGraph);
 		while (iterator.hasNext()) {
 			final var moduleClass = iterator.next();
 			final var module = registeredModules.get(moduleClass);
@@ -207,7 +207,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 		}
 
 		final var start = System.currentTimeMillis();
-		final var iterator = new TopologicalOrderIterator<>(moduleGraph);
+		final var iterator = new DepthFirstIterator<>(moduleGraph);
 		while (iterator.hasNext()) {
 			final var moduleClass = iterator.next();
 			final var module = registeredModules.get(moduleClass);
@@ -262,7 +262,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 	@NotNull
 	@Override
 	public Iterator<Class<? extends PluginModule>> iterator() {
-		return new TopologicalOrderIterator<>(moduleGraph);
+		return new DepthFirstIterator<>(moduleGraph);
 	}
 
 	/**

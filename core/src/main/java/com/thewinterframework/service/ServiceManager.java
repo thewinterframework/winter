@@ -18,7 +18,7 @@ import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.traverse.TopologicalOrderIterator;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import java.util.*;
 
@@ -204,7 +204,7 @@ public class ServiceManager {
 			return new HandleServicesResult(false, cycleDetector.findCycles(), null);
 		}
 
-		final var iterator = new TopologicalOrderIterator<>(graph);
+		final var iterator = new DepthFirstIterator<>(graph);
 		try {
 			while (iterator.hasNext()) {
 				final var meta = iterator.next();
