@@ -1,4 +1,4 @@
-[![Maven Central](https://img.shields.io/maven-central/v/com.thewinterframework/core
+[![Core Current](https://img.shields.io/maven-central/v/com.thewinterframework/core
 )](https://central.sonatype.com/artifact/com.thewinterframework/core)
 
 
