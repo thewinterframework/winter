@@ -5,9 +5,10 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.thewinterframework.plugin.module.PluginModuleManager;
 import com.thewinterframework.utils.TimeUnit;
-import net.kyori.adventure.key.Keyed;
 import net.kyori.adventure.key.Namespaced;
 import org.slf4j.Logger;
+
+import java.time.ZoneId;
 
 /**
  * This class should be extended by any plugin that is used by the WinterBoot plugin.
@@ -60,6 +61,14 @@ public interface WinterPlugin extends Module, Namespaced {
 	 * @return the plugin module manager
 	 */
 	PluginModuleManager getModuleManager();
+
+	/**
+	 * Returns the plugin zone id
+	 * @return the plugin zone id
+	 */
+	default ZoneId getZoneId() {
+		return ZoneId.systemDefault();
+	}
 
 	/**
 	 * Schedules a task to run a/synchronously

@@ -6,11 +6,15 @@ import com.thewinterframework.service.annotation.lifecycle.OnDisable;
 import com.thewinterframework.service.annotation.lifecycle.OnEnable;
 import com.thewinterframework.service.annotation.lifecycle.OnReload;
 import com.thewinterframework.service.annotation.scheduler.RepeatingTask;
+import com.thewinterframework.service.annotation.scheduler.ScheduledAt;
+import com.thewinterframework.service.annotation.scheduler.ScheduledAtContainer;
 import com.thewinterframework.service.meta.ServiceMeta;
 import com.thewinterframework.service.meta.lifecycle.LifeCycleMethod;
 import com.thewinterframework.service.meta.lifecycle.ReflectLifeCycleMethod;
 import com.thewinterframework.service.meta.lifecycle.RunnableLifeCycleMethod;
 import com.thewinterframework.service.meta.scheduler.RepeatingTaskMethod;
+import com.thewinterframework.service.meta.scheduler.ScheduledAtMethod;
+import com.thewinterframework.service.meta.scheduler.SchedulerMethod;
 import com.thewinterframework.utils.Reflections;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +43,7 @@ public class ServiceManager {
 	 *
 	 * @param service The service to register.
 	 */
+	//TODO: This method is too long, consider refactoring
 	public void registerService(final @NotNull Class<?> service) throws IllegalAccessException, NoSuchMethodException {
 		final var onEnableMethods = Reflections.findMethodsWith(service, OnEnable.class)
 				.stream()
@@ -55,6 +60,7 @@ public class ServiceManager {
 				.map(annotatedMethodHandle -> new ReflectLifeCycleMethod(service, annotatedMethodHandle, annotatedMethodHandle.annotation().before(), annotatedMethodHandle.annotation().after()))
 				.toList();
 
+		final var schedulerMethods = new ArrayList<SchedulerMethod>();
 		final var repeatingTaskMethods = Reflections.findMethodsWith(service, RepeatingTask.class)
 				.stream()
 				.map(annotatedMethodHandle ->
@@ -69,7 +75,23 @@ public class ServiceManager {
 				)
 				.toList();
 
-		final var serviceMeta = new ServiceMeta(service, onEnableMethods, onDisableMethods, onReloadMethods, repeatingTaskMethods);
+		schedulerMethods.addAll(repeatingTaskMethods);
+
+		final var scheduledAtMethods = Reflections.findMethodsWith(service, ScheduledAtContainer.class)
+				.stream()
+				.map(annotatedMethodHandle -> {
+					final var scheduledAtContainer = annotatedMethodHandle.annotation();
+					final var schedules = Arrays.stream(scheduledAtContainer.value())
+							.map(scheduledAt -> new ScheduledAtMethod.ScheduledAtTime(scheduledAt.hour(), scheduledAt.minute(), scheduledAt.second()))
+							.toList();
+
+					return new ScheduledAtMethod(service, annotatedMethodHandle, schedules, Arrays.stream(scheduledAtContainer.value()).anyMatch(ScheduledAt::async));
+				})
+				.toList();
+
+		schedulerMethods.addAll(scheduledAtMethods);
+
+		final var serviceMeta = new ServiceMeta(service, onEnableMethods, onDisableMethods, onReloadMethods, schedulerMethods);
 		metaByService.put(service, serviceMeta);
 	}
 
