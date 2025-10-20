@@ -4,7 +4,6 @@ import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Named;
-import jakarta.inject.Qualifier;
 
 import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
@@ -160,11 +159,7 @@ public class Reflections {
 	public static Annotation findBindingAnnotation(AnnotatedElement element) {
 		for (final var annotation : element.getAnnotations()) {
 			final var annotationType = annotation.annotationType();
-			if (annotationType.equals(Named.class) ||
-					annotationType.equals(jakarta.inject.Named.class) ||
-					annotationType.isAnnotationPresent(BindingAnnotation.class) ||
-					annotationType.isAnnotationPresent(Qualifier.class)
-			) {
+			if (annotationType.equals(Named.class) || annotationType.isAnnotationPresent(BindingAnnotation.class)) {
 				return annotation;
 			}
 		}
