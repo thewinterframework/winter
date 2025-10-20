@@ -1,7 +1,7 @@
 package com.thewinterframework.service.meta.scheduler;
 
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.utils.Reflections.AnnotatedMethodHandle;
+import com.thewinterframework.utils.reflect.Reflections.AnnotatedMethodHandle;
 import com.thewinterframework.utils.TimeUnit;
 
 import java.time.Instant;

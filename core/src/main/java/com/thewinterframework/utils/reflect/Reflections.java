@@ -1,4 +1,4 @@
-package com.thewinterframework.utils;
+package com.thewinterframework.utils.reflect;
 
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
@@ -6,7 +6,6 @@ import com.google.inject.Key;
 import com.google.inject.name.Named;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.AnnotatedElement;
@@ -22,47 +21,46 @@ import java.util.List;
 public class Reflections {
 
 	/**
-	 * Represents a method handle annotated with a specific annotation.
-	 *
-	 * @param <T> The annotation type.
-	 */
-	public record AnnotatedMethodHandle<T>(MethodHandle handle, T annotation, List<Key<?>> parameters) {
-		/**
-		 * Invokes the method handle with the given parameters.
-		 *
-		 * @param clazz The class to invoke the method on.
-		 * @param injector The injector to get the instances from.
-		 * @throws Throwable If an error occurs while invoking the method.
-		 */
-		public void invoke(Class<?> clazz, Injector injector) throws Throwable {
-			handle.invokeWithArguments(injectKeys(clazz, parameters, injector));
-		}
-	}
-
-	/**
-	 * Finds all methods in a class that are annotated with a specific annotation.
+	 * Finds all methods in a class that are annotated with a specific annotation,
+	 * or with an annotation that is itself annotated with that annotation (meta-annotation).
 	 *
 	 * @param clazz The class to search in.
-	 * @param annotation The annotation to search for.
+	 * @param annotation The annotation or meta-annotation to search for.
 	 * @param <T> The annotation type.
 	 * @return A list of annotated method handles.
 	 * @throws IllegalAccessException If the method cannot be accessed.
 	 * @throws NoSuchMethodException If the method does not exist.
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(Class<?> clazz, Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
 		final var list = new ArrayList<AnnotatedMethodHandle<T>>();
-		for (final var method : clazz.getDeclaredMethods()) {
-			if (method.isAnnotationPresent(annotation)) {
-				final var handle = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
-						.findVirtual(clazz, method.getName(), MethodType.methodType(method.getReturnType(), method.getParameterTypes()));
 
-				list.add(
-						new AnnotatedMethodHandle<>(
-								handle,
-								method.getAnnotation(annotation),
-								findMethodParameters(method)
-						)
-				);
+		for (final var method : clazz.getDeclaredMethods()) {
+			for (final var methodAnnotation : method.getDeclaredAnnotations()) {
+				final var annotationType = methodAnnotation.annotationType();
+
+				if (annotationType.equals(annotation)) {
+					list.add(new AnnotatedMethodHandle<>(
+							method,
+							MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+									.findVirtual(clazz, method.getName(),
+											MethodType.methodType(method.getReturnType(), method.getParameterTypes())),
+							(T) annotationType.cast(methodAnnotation),
+							findMethodParameters(method)
+					));
+					continue;
+				}
+
+				if (annotationType.isAnnotationPresent(annotation)) {
+					list.add(new AnnotatedMethodHandle<>(
+							method,
+							MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+									.findVirtual(clazz, method.getName(),
+											MethodType.methodType(method.getReturnType(), method.getParameterTypes())),
+							annotationType.getAnnotation(annotation),
+							findMethodParameters(method)
+					));
+				}
 			}
 		}
 

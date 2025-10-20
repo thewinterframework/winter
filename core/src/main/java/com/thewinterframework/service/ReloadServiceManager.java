@@ -1,8 +1,9 @@
 package com.thewinterframework.service;
 
 import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.thewinterframework.service.ServiceManager.HandleServicesResult;
+import com.thewinterframework.plugin.WinterPlugin;
+import com.thewinterframework.service.decorator.lifecycle.LifeCycleDecoratorHandler.LifeCycleResult;
+import com.thewinterframework.service.decorator.lifecycle.OnReloadDecoratorHandler;
 
 /**
  * Manages the reloading of services.
@@ -10,12 +11,12 @@ import com.thewinterframework.service.ServiceManager.HandleServicesResult;
 public class ReloadServiceManager {
 
 	private final ServiceManager serviceManager;
-	private final Injector injector;
+	private final WinterPlugin plugin;
 
 	@Inject
-	public ReloadServiceManager(ServiceManager serviceManager, Injector injector) {
+	public ReloadServiceManager(ServiceManager serviceManager, WinterPlugin plugin) {
 		this.serviceManager = serviceManager;
-		this.injector = injector;
+		this.plugin = plugin;
 	}
 
 	/**
@@ -24,7 +25,10 @@ public class ReloadServiceManager {
 	 * @param reloadService The reload service
 	 */
 	public void addOnReload(Class<?> service, Runnable reloadService) {
-		serviceManager.addReloadMethod(service, reloadService);
+		final var handler = serviceManager.getHandler(OnReloadDecoratorHandler.class);
+		if (handler != null) {
+			handler.addReloadMethod(service, reloadService);
+		}
 	}
 
 	/**
@@ -32,7 +36,12 @@ public class ReloadServiceManager {
 	 *
 	 * @return The result of the reload
 	 */
-	public HandleServicesResult reload() {
-		return serviceManager.reloadServices(injector);
+	public LifeCycleResult reload() {
+		final var handler = serviceManager.getHandler(OnReloadDecoratorHandler.class);
+		if (handler == null) {
+			return new LifeCycleResult(false, null);
+		}
+
+		return handler.execute(plugin);
 	}
 }

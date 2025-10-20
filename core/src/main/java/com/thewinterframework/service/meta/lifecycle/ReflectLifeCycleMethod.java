@@ -1,6 +1,6 @@
 package com.thewinterframework.service.meta.lifecycle;
 
-import com.thewinterframework.utils.Reflections.AnnotatedMethodHandle;
+import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 
 /**
  * Represents a lifecycle method that is reflected.

@@ -1,3 +1,4 @@
+
 plugins {
     id("java")
     `java-library`
@@ -21,9 +22,6 @@ dependencies {
 
     // Common
     compileOnlyApi(libs.guava)
-
-    // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.5.2")
 
     // Logging
     compileOnlyApi("org.slf4j:slf4j-log4j12:1.7.29")
