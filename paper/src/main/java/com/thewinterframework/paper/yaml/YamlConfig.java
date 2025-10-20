@@ -133,8 +133,8 @@ public final class YamlConfig extends YamlConfiguration {
 	public static @NotNull YamlConfig configuration(final @NotNull Plugin plugin, final @NotNull String configurationFileName) {
 		requireNonNull(plugin, "plugin");
 		requireNonNull(configurationFileName, "configurationFileName");
-		final Supplier<InputStream> resource = () -> plugin.getResource(configurationFileName);
-		final var path = plugin.getDataFolder().toPath().resolve(configurationFileName);
+		final Supplier<InputStream> resource = () -> plugin.getResource(configurationFileName + ".yml");
+		final var path = plugin.getDataFolder().toPath().resolve(configurationFileName + ".yml");
 		final var config = new YamlConfig(path, resource);
 		config.load(); // first load
 		return config;

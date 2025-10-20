@@ -3,6 +3,7 @@ package com.thewinterframework.plugin;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.thewinterframework.expression.AnnotationExpressionResolver;
 import com.thewinterframework.plugin.module.PluginModuleManager;
 import com.thewinterframework.utils.TimeUnit;
 import net.kyori.adventure.key.Namespaced;
@@ -61,6 +62,18 @@ public interface WinterPlugin extends Module, Namespaced {
 	 * @return the plugin module manager
 	 */
 	PluginModuleManager getModuleManager();
+
+	/**
+	 * Returns the annotation expression resolver
+	 * @return the annotation expression resolver
+	 */
+	AnnotationExpressionResolver getExpressionResolver();
+
+	/**
+	 * Sets the annotation expression resolver
+	 * @param resolver the annotation expression resolver
+	 */
+	void setExpressionResolver(AnnotationExpressionResolver resolver);
 
 	/**
 	 * Returns the plugin zone id

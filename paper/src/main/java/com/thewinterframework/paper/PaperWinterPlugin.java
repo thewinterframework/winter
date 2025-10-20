@@ -2,6 +2,8 @@ package com.thewinterframework.paper;
 
 import com.google.inject.Module;
 import com.google.inject.*;
+import com.thewinterframework.expression.AnnotationExpressionResolver;
+import com.thewinterframework.paper.yaml.YamlConfigExpressionResolver;
 import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModuleManager;
@@ -23,6 +25,8 @@ import java.util.List;
 public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlugin {
 
 	protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
+	protected AnnotationExpressionResolver annotationExpressionResolver = new YamlConfigExpressionResolver(this);
+
 	protected @Inject Injector injector;
 
 	@Override
@@ -74,6 +78,16 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 		} else {
 			return Bukkit.getScheduler().runTaskTimer(this, task, delayTicks, periodTicks).getTaskId();
 		}
+	}
+
+	@Override
+	public AnnotationExpressionResolver getExpressionResolver() {
+		return annotationExpressionResolver;
+	}
+
+	@Override
+	public void setExpressionResolver(AnnotationExpressionResolver resolver) {
+		this.annotationExpressionResolver = resolver;
 	}
 
 	@Override
