@@ -5,14 +5,14 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.thewinterframework.expression.AnnotationExpressionResolver;
 import com.thewinterframework.plugin.module.PluginModuleManager;
-import com.thewinterframework.utils.TimeUnit;
+import com.thewinterframework.scheduler.PluginScheduler;
 import net.kyori.adventure.key.Namespaced;
 import org.slf4j.Logger;
 
 import java.time.ZoneId;
 
 /**
- * This class should be extended by any plugin that is used by the WinterBoot plugin.
+ * This class should be extended by any plugin that is used by the WinterBoot annotation.
  */
 public interface WinterPlugin extends Module, Namespaced {
 
@@ -73,7 +73,7 @@ public interface WinterPlugin extends Module, Namespaced {
 	 * Sets the annotation expression resolver
 	 * @param resolver the annotation expression resolver
 	 */
-	void setExpressionResolver(AnnotationExpressionResolver resolver);
+	void setExpressionResolver(final AnnotationExpressionResolver resolver);
 
 	/**
 	 * Returns the plugin zone id
@@ -84,21 +84,9 @@ public interface WinterPlugin extends Module, Namespaced {
 	}
 
 	/**
-	 * Schedules a task to run a/synchronously
-	 * @param task the task to run
-	 * @param delay the delay before the task starts
-	 * @param unit the time unit of the delay
-	 * @param async whether the task should run asynchronously
-	 * @return the task id
+	 * Returns the task scheduler
+	 * @return the task scheduler
 	 */
-	//TODO: Move to SchedulerManager or something like that
-	int scheduleRepeatingTask(Runnable task, long delay, long period, TimeUnit unit, boolean async);
-
-	/**
-	 * Cancels a task
-	 * @param taskId the task id
-	 */
-	//TODO: Move to SchedulerManager or something like that
-	void cancelTask(int taskId);
+	PluginScheduler getScheduler();
 
 }

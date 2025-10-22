@@ -1,8 +1,10 @@
 package com.thewinterframework.service.meta.scheduler;
 
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.utils.reflect.Reflections.AnnotatedMethodHandle;
+import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 import com.thewinterframework.utils.TimeUnit;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a repeating task method
@@ -16,14 +18,37 @@ import com.thewinterframework.utils.TimeUnit;
 public record RepeatingTaskMethod(
 		Class<?> service,
 		AnnotatedMethodHandle<?> method,
-		long delay,
-		long every,
-		TimeUnit unit,
-		boolean async
+		String delay,
+		String every,
+		String unit,
+		String async
 ) implements SchedulerMethod {
 	@Override
 	public int schedule(WinterPlugin plugin) {
-		return plugin.scheduleRepeatingTask(
+		final var scheduler = plugin.getScheduler();
+		final var expressionResolver = plugin.getExpressionResolver();
+
+		final long delayParsed = requireNonNull(expressionResolver.resolve(method, delay, Long.class));
+		final long everyParsed = requireNonNull(expressionResolver.resolve(method, every, Long.class));
+		final var unitParsed = requireNonNull(expressionResolver.resolve(method, unit, TimeUnit.class));
+		final var asyncParsed = requireNonNull(expressionResolver.resolve(method, async, Boolean.class));
+
+		if (asyncParsed) {
+			return scheduler.runAtFixedRateAsync(
+					() -> {
+						try {
+							method.invoke(service, plugin.getInjector());
+						} catch (Throwable e) {
+							plugin.getSLF4JLogger().error("Error while executing repeating task", e);
+						}
+					},
+					delayParsed,
+					everyParsed,
+					unitParsed
+			);
+		}
+
+		return scheduler.runAtFixedRateSync(
 				() -> {
 					try {
 						method.invoke(service, plugin.getInjector());
@@ -31,10 +56,9 @@ public record RepeatingTaskMethod(
 						plugin.getSLF4JLogger().error("Error while executing repeating task", e);
 					}
 				},
-				delay,
-				every,
-				unit,
-				async
+				delayParsed,
+				everyParsed,
+				unitParsed
 		);
 	}
 }

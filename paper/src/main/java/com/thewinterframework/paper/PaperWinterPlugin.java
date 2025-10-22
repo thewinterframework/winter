@@ -3,10 +3,12 @@ package com.thewinterframework.paper;
 import com.google.inject.Module;
 import com.google.inject.*;
 import com.thewinterframework.expression.AnnotationExpressionResolver;
+import com.thewinterframework.paper.scheduler.PaperPluginScheduler;
 import com.thewinterframework.paper.yaml.YamlConfigExpressionResolver;
 import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModuleManager;
+import com.thewinterframework.scheduler.PluginScheduler;
 import com.thewinterframework.utils.TimeUnit;
 import net.kyori.adventure.key.KeyPattern;
 import org.bukkit.Bukkit;
@@ -25,6 +27,8 @@ import java.util.List;
 public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlugin {
 
 	protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
+	protected final PluginScheduler scheduler = new PaperPluginScheduler(this);
+
 	protected AnnotationExpressionResolver annotationExpressionResolver = new YamlConfigExpressionResolver(this);
 
 	protected @Inject Injector injector;
@@ -70,14 +74,8 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	}
 
 	@Override
-	public final int scheduleRepeatingTask(Runnable task, long delay, long period, TimeUnit unit, boolean async) {
-		final var delayTicks = unit.toTicks(delay);
-		final var periodTicks = unit.toTicks(period);
-		if (async) {
-			return Bukkit.getScheduler().runTaskTimerAsynchronously(this, task, delayTicks, periodTicks).getTaskId();
-		} else {
-			return Bukkit.getScheduler().runTaskTimer(this, task, delayTicks, periodTicks).getTaskId();
-		}
+	public PluginScheduler getScheduler() {
+		return scheduler;
 	}
 
 	@Override
@@ -88,11 +86,6 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	@Override
 	public void setExpressionResolver(AnnotationExpressionResolver resolver) {
 		this.annotationExpressionResolver = resolver;
-	}
-
-	@Override
-	public void cancelTask(int taskId) {
-		Bukkit.getScheduler().cancelTask(taskId);
 	}
 
 	@Override

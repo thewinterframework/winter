@@ -36,7 +36,7 @@ public class YamlConfigExpressionResolver extends SimpleFirstExpressionResolver 
 		}));
 
 		if (yamlInstance == null) {
-			return null;
+			throw new IllegalStateException("No YAML config found for file name: " + fileName);
 		}
 
 		final var value = yamlInstance.get(path);
