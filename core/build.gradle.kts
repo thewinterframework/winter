@@ -5,6 +5,7 @@ plugins {
 }
 
 repositories {
+    mavenCentral()
     maven("https://papermc.io/repo/repository/maven-public/")
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.kryptonmc.org/releases")
