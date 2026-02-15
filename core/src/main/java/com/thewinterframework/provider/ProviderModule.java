@@ -48,9 +48,11 @@ public final class ProviderModule implements PluginModule {
 		this.providers.clear();
 	}
 
-	private <O, T extends Provider<O>> void bindProvider(final @NotNull Binder binder, final Class<T> providerClass) {
-		final var typeLiteral = resolveTypeLiteral(providerClass);
-		binder.bind(typeLiteral).toProvider(providerClass);
+	@SuppressWarnings("unchecked")
+	private <O> void bindProvider(final @NotNull Binder binder, final Class<?> providerClass) {
+		final var casted = (Class<? extends Provider<O>>) providerClass;
+		final var typeLiteral = resolveTypeLiteral(casted);
+		binder.bind(typeLiteral).toProvider(casted);
 	}
 
 	@SuppressWarnings("unchecked")
