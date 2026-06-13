@@ -16,6 +16,9 @@ dependencies {
     // Core
     api(project(":core"))
     annotationProcessor(project(":core"))
+
+    compileOnlyApi(libs.auto.service.annotations)
+    annotationProcessor(libs.auto.service)
 }
 
 tasks.withType<JavaCompile> {

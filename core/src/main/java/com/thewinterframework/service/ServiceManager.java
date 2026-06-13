@@ -9,7 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <p> This class is responsible for managing services. </p>
@@ -28,9 +31,8 @@ public class ServiceManager {
 	public void registerService(final @NotNull Class<?> service) throws IllegalAccessException, NoSuchMethodException {
 		final var serviceDecorators = Reflections.findClassAnnotations(service, ServiceDecorator.class);
 		for (final var decoratorAnnotation : serviceDecorators) {
-			final var meta = decoratorAnnotation.annotationType().getAnnotation(ServiceDecorator.class);
-			final var handlerClass = meta.value();
-			final var handler = (ServiceDecoratorHandler<Annotation>) handlers.computeIfAbsent(handlerClass, this::createInstance);
+			final var serviceDecorator = decoratorAnnotation.annotationType().getAnnotation(ServiceDecorator.class);
+			final var handler = (ServiceDecoratorHandler<Annotation>) handlers.computeIfAbsent(serviceDecorator.value(), this::createInstance);
 			handler.onDiscoverOnType(service, decoratorAnnotation);
 		}
 
@@ -49,6 +51,7 @@ public class ServiceManager {
 
 	/**
 	 * Load all plugin service handlers.
+	 *
 	 * @param plugin The plugin to load handlers for.
 	 */
 	public void loadHandlers(final WinterPlugin plugin) {
@@ -59,6 +62,7 @@ public class ServiceManager {
 
 	/**
 	 * Configure all plugin service handlers.
+	 *
 	 * @param binder The binder to configure handlers with.
 	 */
 	public void configureHandlers(final Binder binder) {
@@ -69,6 +73,7 @@ public class ServiceManager {
 
 	/**
 	 * Start all plugin service handlers.
+	 *
 	 * @param plugin The plugin to start handlers for.
 	 */
 	public void startHandlers(final WinterPlugin plugin) {
@@ -79,6 +84,7 @@ public class ServiceManager {
 
 	/**
 	 * Stop all plugin service handlers.
+	 *
 	 * @param plugin The plugin to stop handlers for.
 	 */
 	public void stopHandlers(final WinterPlugin plugin) {
@@ -89,9 +95,10 @@ public class ServiceManager {
 
 	/**
 	 * Get a handler by its class.
+	 *
 	 * @param handlerClass The handler class.
+	 * @param <T>          The type of the handler.
 	 * @return The handler instance or null if not found.
-	 * @param <T> The type of the handler.
 	 */
 	@Nullable
 	public <T extends ServiceDecoratorHandler<?>> T getHandler(final Class<T> handlerClass) {

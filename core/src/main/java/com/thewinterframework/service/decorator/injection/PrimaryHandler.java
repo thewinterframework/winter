@@ -22,7 +22,7 @@ public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
 	public void onDiscoverOnType(final Class<?> service, final Primary annotation) {
 		final var superType = annotation.value();
 		if (superType != Void.class) {
-			bindAsMap.put(service, annotation.value());
+			bindAsMap.put(annotation.value(), superType);
 			return;
 		}
 
@@ -32,7 +32,7 @@ public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
 		}
 
 		final var firstInterface = interfaces[0];
-		bindAsMap.put(service, firstInterface);
+		bindAsMap.put(firstInterface, service);
 	}
 
 	@Override

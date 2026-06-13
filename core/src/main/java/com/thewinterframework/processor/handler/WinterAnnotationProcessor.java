@@ -26,4 +26,7 @@ public interface WinterAnnotationProcessor {
 
 	default void onRoundEnd(final ProcessorContext ctx) {
 	}
+
+	default void onProcessingComplete(final ProcessorContext ctx) {
+	}
 }

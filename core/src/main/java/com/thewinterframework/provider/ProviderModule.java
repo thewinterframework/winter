@@ -19,7 +19,7 @@ public class ProviderModule extends AbstractProcessorModule {
 	public void configure(final Binder binder) {
 		binder.bindScope(ProviderComponent.class, Scopes.SINGLETON);
 		for (final var providerClass : this.activeComponents) {
-			bindProvider(binder, (Class<? extends Provider<?>>) providerClass);
+			bindProvider(binder, (Class<? extends Provider<Object>>) providerClass);
 		}
 		this.activeComponents.clear();
 	}

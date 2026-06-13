@@ -24,12 +24,12 @@ public class Reflections {
 	 * Finds all methods in a class that are annotated with a specific annotation,
 	 * or with an annotation that is itself annotated with that annotation (meta-annotation).
 	 *
-	 * @param clazz The class to search in.
+	 * @param clazz      The class to search in.
 	 * @param annotation The annotation or meta-annotation to search for.
-	 * @param <T> The annotation type.
+	 * @param <T>        The annotation type.
 	 * @return A list of annotated method handles.
 	 * @throws IllegalAccessException If the method cannot be accessed.
-	 * @throws NoSuchMethodException If the method does not exist.
+	 * @throws NoSuchMethodException  If the method does not exist.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(final Class<?> clazz, final Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
@@ -69,17 +69,18 @@ public class Reflections {
 
 	/**
 	 * Finds all annotations of a class that are annotated with a specific meta-annotation.
-	 * @param clazz The class to get the annotations from.
+	 *
+	 * @param clazz          The class to get the annotations from.
 	 * @param metaAnnotation The meta-annotation to get the annotations from.
+	 * @param <T>            The annotation type.
 	 * @return The annotations.
-	 * @param <T> The annotation type.
 	 */
-	public static <T extends Annotation> List<T> findClassAnnotations(final Class<?> clazz, final Class<T> metaAnnotation) {
-		final var list = new ArrayList<T>();
+	public static <T extends Annotation> List<Annotation> findClassAnnotations(final Class<?> clazz, final Class<T> metaAnnotation) {
+		final var list = new ArrayList<Annotation>();
 
 		for (final var annotation : clazz.getAnnotations()) {
 			if (annotation.annotationType().isAnnotationPresent(metaAnnotation)) {
-				list.add((T) annotation);
+				list.add(annotation);
 			}
 		}
 
@@ -119,7 +120,7 @@ public class Reflections {
 	 * Injects the keys into the injector and returns the objects.
 	 *
 	 * @param instance The instance to inject the keys into.
-	 * @param keys The keys to inject.
+	 * @param keys     The keys to inject.
 	 * @param injector The injector to get the instances from.
 	 * @return The objects.
 	 */
@@ -135,9 +136,9 @@ public class Reflections {
 	/**
 	 * Gets the generic type of class that implements an interface.
 	 *
-	 * @param clazz The class to get the generic type from.
+	 * @param clazz     The class to get the generic type from.
 	 * @param interfaze The interface to get the generic type from.
-	 * @param index The index of the generic type.
+	 * @param index     The index of the generic type.
 	 * @return The generic type.
 	 */
 	public static Type getGenericType(final Class<?> clazz, final Class<?> interfaze, final int index) {

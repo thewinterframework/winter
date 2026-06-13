@@ -31,7 +31,7 @@ public abstract class ClassWireProcessor implements WinterAnnotationProcessor {
 	}
 
 	public static String wiredClassName(final Class<? extends Annotation> annotation) {
-		return annotation.getName() + "ListWire";
+		return annotation.getSimpleName() + "ListWire";
 	}
 
 	public static String canonicalWiredClassName(final WinterPlugin plugin, final Class<? extends Annotation> annotation) {
@@ -54,7 +54,7 @@ public abstract class ClassWireProcessor implements WinterAnnotationProcessor {
 	}
 
 	@Override
-	public void onRoundEnd(final ProcessorContext ctx) {
+	public void onProcessingComplete(final ProcessorContext ctx) {
 		final var className = wiredClassName(wiredAnnotation());
 		final var packageName = ctx.getWinterModulePackageString();
 		WinterProcessor.writeClassWire(ctx, className, packageName, classes);
