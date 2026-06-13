@@ -1,9 +1,11 @@
 package com.thewinterframework.service.decorator;
 
+import com.google.inject.Binder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 
 import java.lang.annotation.Annotation;
+import java.util.List;
 
 /**
  * Handler for service decorators (annotations).
@@ -25,7 +27,20 @@ public interface ServiceDecoratorHandler<A extends Annotation> {
 	 * @param service The class containing the annotated method.
 	 * @param method  The annotated method handle.
 	 */
-	void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method);
+	default void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {}
+
+	/**
+	 * Called when a method with the decorator annotation is discovered.
+	 * @param service The class containing the annotated method.
+	 * @param annotation The annotation.
+	 */
+	default void onDiscoverOnType(final Class<?> service, final A annotation) {}
+
+	/**
+	 * Called when the plugin is configured.
+	 * @param binder The Guice binder.
+	 */
+	default void onConfigure(final Binder binder) {}
 
 	/**
 	 * Called when a plugin is loaded.

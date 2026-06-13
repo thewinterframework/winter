@@ -7,7 +7,7 @@ import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 
 public class RepeatingTaskDecoratorHandler extends SchedulerDecoratorHandler<RepeatingTask> {
 	@Override
-	protected SchedulerMethod map(Class<?> service, RepeatingTask annotation, AnnotatedMethodHandle<RepeatingTask> method) {
+	protected SchedulerMethod map(final Class<?> service, final RepeatingTask annotation, final AnnotatedMethodHandle<RepeatingTask> method) {
 		return new RepeatingTaskMethod(
 				service,
 				method,

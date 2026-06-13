@@ -10,17 +10,17 @@ public class OnEnableDecoratorHandler extends LifeCycleDecoratorHandler<OnEnable
 	}
 
 	@Override
-	public void onPluginEnable(WinterPlugin plugin) {
+	public void onPluginEnable(final WinterPlugin plugin) {
 		executeInternally(plugin);
 	}
 
 	@Override
-	protected Class<?>[] extractAfterAnnotations(OnEnable annotation) {
+	protected Class<?>[] extractAfterAnnotations(final OnEnable annotation) {
 		return annotation.after();
 	}
 
 	@Override
-	protected Class<?>[] extractBeforeAnnotations(OnEnable annotation) {
+	protected Class<?>[] extractBeforeAnnotations(final OnEnable annotation) {
 		return new Class[0];
 	}
 }

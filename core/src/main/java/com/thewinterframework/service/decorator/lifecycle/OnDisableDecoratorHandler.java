@@ -10,17 +10,17 @@ public class OnDisableDecoratorHandler extends LifeCycleDecoratorHandler<OnDisab
 	}
 
 	@Override
-	public void onPluginDisable(WinterPlugin plugin) {
+	public void onPluginDisable(final WinterPlugin plugin) {
 		executeInternally(plugin);
 	}
 
 	@Override
-	protected Class<?>[] extractAfterAnnotations(OnDisable annotation) {
+	protected Class<?>[] extractAfterAnnotations(final OnDisable annotation) {
 		return new Class[0];
 	}
 
 	@Override
-	protected Class<?>[] extractBeforeAnnotations(OnDisable annotation) {
+	protected Class<?>[] extractBeforeAnnotations(final OnDisable annotation) {
 		return annotation.before();
 	}
 }

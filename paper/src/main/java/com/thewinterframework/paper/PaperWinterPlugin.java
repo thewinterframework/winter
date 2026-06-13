@@ -1,15 +1,16 @@
 package com.thewinterframework.paper;
 
-import com.google.inject.Module;
 import com.google.inject.*;
-import com.thewinterframework.expression.AnnotationExpressionResolver;
+import com.google.inject.Module;
+import com.thewinterframework.expression.ExpressionResolver;
+import com.thewinterframework.expression.JexlExpressionResolver;
+import com.thewinterframework.paper.platform.PaperPlatform;
 import com.thewinterframework.paper.scheduler.PaperPluginScheduler;
-import com.thewinterframework.paper.yaml.YamlConfigExpressionResolver;
 import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModuleManager;
+import com.thewinterframework.plugin.platform.PlatformPluginManager;
 import com.thewinterframework.scheduler.PluginScheduler;
-import com.thewinterframework.utils.TimeUnit;
 import net.kyori.adventure.key.KeyPattern;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -28,8 +29,9 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 
 	protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
 	protected final PluginScheduler scheduler = new PaperPluginScheduler(this);
+	protected final PlatformPluginManager platformPluginManager = new PaperPlatform();
 
-	protected AnnotationExpressionResolver annotationExpressionResolver = new YamlConfigExpressionResolver(this);
+	protected ExpressionResolver expressionResolver = new JexlExpressionResolver();
 
 	protected @Inject Injector injector;
 
@@ -79,13 +81,13 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	}
 
 	@Override
-	public AnnotationExpressionResolver getExpressionResolver() {
-		return annotationExpressionResolver;
+	public ExpressionResolver getExpressionResolver() {
+		return expressionResolver;
 	}
 
 	@Override
-	public void setExpressionResolver(AnnotationExpressionResolver resolver) {
-		this.annotationExpressionResolver = resolver;
+	public void setExpressionResolver(final ExpressionResolver resolver) {
+		this.expressionResolver = resolver;
 	}
 
 	@Override
@@ -101,6 +103,11 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	@Override
 	public final PluginModuleManager getModuleManager() {
 		return moduleManager;
+	}
+
+	@Override
+	public PlatformPluginManager getPlatformManager() {
+		return platformPluginManager;
 	}
 
 	protected List<Module> getGuiceModules() {

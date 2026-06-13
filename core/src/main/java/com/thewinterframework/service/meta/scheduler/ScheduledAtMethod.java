@@ -1,12 +1,11 @@
 package com.thewinterframework.service.meta.scheduler;
 
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 import com.thewinterframework.utils.TimeUnit;
+import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -21,22 +20,24 @@ public record ScheduledAtMethod(
 			String minute,
 			String second,
 			String async
-	) {}
+	) {
+	}
 
 	public record ParsedScheduledAtTime(
 			int hour,
 			int minute,
 			int second
-	) {}
+	) {
+	}
 
 	@Override
-	public int schedule(WinterPlugin plugin) {
+	public int schedule(final WinterPlugin plugin) {
 		final var scheduler = plugin.getScheduler();
 		final var expressionResolver = plugin.getExpressionResolver();
 
-		boolean shouldBeAsync = false;
-		for (ScheduledAtTime schedule : schedules) {
-			final var asyncParsed = expressionResolver.resolve(method, schedule.async, Boolean.class);
+		var shouldBeAsync = false;
+		for (final var schedule : schedules) {
+			final var asyncParsed = expressionResolver.resolve(schedule.async, Boolean.class);
 			if (asyncParsed != null && asyncParsed) {
 				shouldBeAsync = true;
 				break;
@@ -45,9 +46,9 @@ public record ScheduledAtMethod(
 
 		final var parsedSchedules = schedules.stream()
 				.map(schedule -> {
-					final var hourParsed = requireNonNull(expressionResolver.resolve(method, schedule.hour, Integer.class));
-					final var minuteParsed = expressionResolver.resolve(method, schedule.minute, Integer.class);
-					final var secondParsed = expressionResolver.resolve(method, schedule.second, Integer.class);
+					final var hourParsed = requireNonNull(expressionResolver.resolve(schedule.hour, Integer.class));
+					final var minuteParsed = expressionResolver.resolve(schedule.minute, Integer.class);
+					final var secondParsed = expressionResolver.resolve(schedule.second, Integer.class);
 
 					return new ParsedScheduledAtTime(
 							hourParsed,
@@ -73,7 +74,7 @@ public record ScheduledAtMethod(
 
 			try {
 				method.invoke(service, plugin.getInjector());
-			} catch (Throwable e) {
+			} catch (final Throwable e) {
 				plugin.getSLF4JLogger().error("Error while executing repeating task", e);
 			}
 		};

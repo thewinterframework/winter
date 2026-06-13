@@ -3,57 +3,37 @@ package com.thewinterframework.paper.listener.module;
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
 import com.thewinterframework.paper.listener.ListenerComponent;
-import com.thewinterframework.paper.listener.processor.ListenerComponentProcessor;
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.plugin.module.PluginModule;
+import com.thewinterframework.wire.module.AbstractProcessorModule;
+import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * A module that handles listener components.
  */
-public class ListenerModule implements PluginModule {
+public class ListenerModule extends AbstractProcessorModule {
 
-	private final Set<Class<? extends Listener>> discoveredListeners = new HashSet<>();
+	public ListenerModule() {
+		super(ListenerComponent.class);
+	}
 
 	@Override
-	public void configure(Binder binder) {
+	public void configure(final Binder binder) {
 		binder.bindScope(ListenerComponent.class, Scopes.SINGLETON);
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public boolean onLoad(WinterPlugin plugin) {
-		try {
-			final var listeners = ListenerComponentProcessor.scan(plugin.getClass(), ListenerComponent.class).getClassList();
-			discoveredListeners.addAll(
-					listeners.stream()
-							.filter(Listener.class::isAssignableFrom)
-							.map(clazz -> (Class<? extends Listener>) clazz)
-							.toList()
-			);
-			return true;
-		} catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
-			plugin.getSLF4JLogger().error("Failed to scan listeners", e);
-			return false;
-		}
-	}
-
-	@Override
-	public boolean onEnable(WinterPlugin plugin) {
+	protected void enableComponent(final WinterPlugin plugin, final Class<?> componentClass) {
 		final var javaPlugin = (JavaPlugin) plugin;
-		final var pluginManager = javaPlugin.getServer().getPluginManager();
-		discoveredListeners.forEach(listener -> pluginManager.registerEvents(plugin.getInjector().getInstance(listener), javaPlugin));
-		return true;
+		final var listener = (Listener) plugin.getInjector().getInstance(componentClass);
+		Bukkit.getServer().getPluginManager().registerEvents(listener, javaPlugin);
 	}
 
 	@Override
-	public boolean onDisable(WinterPlugin plugin) {
+	public boolean onDisable(final WinterPlugin plugin) throws Exception {
+		super.onDisable(plugin);
 		HandlerList.unregisterAll((JavaPlugin) plugin);
 		return true;
 	}

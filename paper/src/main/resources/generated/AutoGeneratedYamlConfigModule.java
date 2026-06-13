@@ -6,11 +6,10 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.thewinterframework.paper.yaml.FileName;
 import com.thewinterframework.paper.yaml.YamlConfig;
-import com.thewinterframework.plugin.module.PluginModule;
+import com.thewinterframework.processor.module.ProcessorModule;
 import org.bukkit.plugin.Plugin;
 
-public class <CLASS_NAME> extends AbstractModule implements PluginModule {
-
+public class <CLASS_NAME> extends AbstractModule implements ProcessorModule {
 	<el>
 	@Provides
 	@Singleton

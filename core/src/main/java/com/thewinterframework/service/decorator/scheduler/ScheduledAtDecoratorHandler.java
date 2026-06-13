@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class ScheduledAtDecoratorHandler extends SchedulerDecoratorHandler<ScheduledAtContainer> {
 	@Override
-	protected SchedulerMethod map(Class<?> service, ScheduledAtContainer annotation, AnnotatedMethodHandle<ScheduledAtContainer> method) {
+	protected SchedulerMethod map(final Class<?> service, final ScheduledAtContainer annotation, final AnnotatedMethodHandle<ScheduledAtContainer> method) {
 		final var schedules = Arrays.stream(annotation.value())
 				.map(scheduledAt -> new ScheduledAtMethod.ScheduledAtTime(scheduledAt.hour(), scheduledAt.minute(), scheduledAt.second(), scheduledAt.async()))
 				.toList();

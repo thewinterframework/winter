@@ -108,11 +108,11 @@ public class DfsGraph<T> implements Iterable<T> {
 	 */
 	private String extractCycle(final Deque<T> path, final T start) {
 		final List<T> cycle = new ArrayList<>();
-		final Iterator<T> it = path.iterator();
+		final var it = path.iterator();
 
-		boolean inCycle = false;
+		var inCycle = false;
 		while (it.hasNext()) {
-			T node = it.next();
+			final var node = it.next();
 			if (Objects.equals(node, start)) {
 				inCycle = true;
 			}

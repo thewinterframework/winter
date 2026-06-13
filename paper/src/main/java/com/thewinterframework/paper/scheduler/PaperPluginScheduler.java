@@ -13,7 +13,7 @@ public class PaperPluginScheduler implements PluginScheduler {
 
 	private final JavaPlugin plugin;
 
-	public PaperPluginScheduler(JavaPlugin plugin) {
+	public PaperPluginScheduler(final JavaPlugin plugin) {
 		this.plugin = plugin;
 	}
 
@@ -28,42 +28,42 @@ public class PaperPluginScheduler implements PluginScheduler {
 	}
 
 	@Override
-	public void cancelTask(int taskId) {
+	public void cancelTask(final int taskId) {
 		Bukkit.getScheduler().cancelTask(taskId);
 	}
 
 	@Override
-	public int runAsync(Runnable runnable) {
+	public int runAsync(final Runnable runnable) {
 		return Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable).getTaskId();
 	}
 
 	@Override
-	public int runSync(Runnable runnable) {
+	public int runSync(final Runnable runnable) {
 		return Bukkit.getScheduler().runTask(plugin, runnable).getTaskId();
 	}
 
 	@Override
-	public int runAtFixedRateAsync(Runnable runnable, long initialDelay, long intervalTicks, TimeUnit unit) {
+	public int runAtFixedRateAsync(final Runnable runnable, final long initialDelay, final long intervalTicks, final TimeUnit unit) {
 		return Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, runnable, unit.toTicks(initialDelay), unit.toTicks(intervalTicks)).getTaskId();
 	}
 
 	@Override
-	public int runAtFixedRateSync(Runnable runnable, long initialDelay, long intervalTicks, TimeUnit unit) {
+	public int runAtFixedRateSync(final Runnable runnable, final long initialDelay, final long intervalTicks, final TimeUnit unit) {
 		return Bukkit.getScheduler().runTaskTimer(plugin, runnable, unit.toTicks(initialDelay), unit.toTicks(intervalTicks)).getTaskId();
 	}
 
 	@Override
-	public int runDelayedAsync(Runnable runnable, long delayTicks, TimeUnit unit) {
+	public int runDelayedAsync(final Runnable runnable, final long delayTicks, final TimeUnit unit) {
 		return Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, unit.toTicks(delayTicks)).getTaskId();
 	}
 
 	@Override
-	public int runDelayedSync(Runnable runnable, long delayTicks, TimeUnit unit) {
+	public int runDelayedSync(final Runnable runnable, final long delayTicks, final TimeUnit unit) {
 		return Bukkit.getScheduler().runTaskLater(plugin, runnable, unit.toTicks(delayTicks)).getTaskId();
 	}
 
 	@Override
-	public void ensureSync(Runnable runnable) {
+	public void ensureSync(final Runnable runnable) {
 		if (Bukkit.isPrimaryThread()) {
 			runnable.run();
 		} else {
@@ -72,7 +72,7 @@ public class PaperPluginScheduler implements PluginScheduler {
 	}
 
 	@Override
-	public <T> CompletableFuture<T> getSync(Supplier<T> supplier) {
+	public <T> CompletableFuture<T> getSync(final Supplier<T> supplier) {
 		if (Bukkit.isPrimaryThread()) {
 			return CompletableFuture.completedFuture(supplier.get());
 		} else {
@@ -80,7 +80,7 @@ public class PaperPluginScheduler implements PluginScheduler {
 			runSync(() -> {
 				try {
 					future.complete(supplier.get());
-				} catch (Throwable e) {
+				} catch (final Throwable e) {
 					future.completeExceptionally(e);
 				}
 			});

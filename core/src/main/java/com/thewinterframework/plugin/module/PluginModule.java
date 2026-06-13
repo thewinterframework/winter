@@ -16,7 +16,7 @@ public interface PluginModule extends Module {
 	 * @param plugin the plugin instance which is loaded
 	 * @return list of modules that this module depends on, and will be loaded before this module
 	 */
-	default List<Class<? extends PluginModule>> depends(WinterPlugin plugin) {
+	default List<Class<? extends PluginModule>> depends(final WinterPlugin plugin) {
 		return List.of();
 	}
 
@@ -25,42 +25,42 @@ public interface PluginModule extends Module {
 	 * @param plugin the plugin instance which is loaded
 	 * @return list of modules that this module should be loaded before them
 	 */
-	default List<Class<? extends PluginModule>> before(WinterPlugin plugin) {
+	default List<Class<? extends PluginModule>> before(final WinterPlugin plugin) {
 		return List.of();
 	}
 
 	/**
 	 * Called when the plugin is loaded
-	 * <br><b>NOTE: Plugin injections is not available at this point</b>
+	 * <br><b>NOTE: Plugin injections are not available at this point</b>
 	 * @param plugin the plugin instance which is loaded
 	 */
-	default boolean onLoad(WinterPlugin plugin) {
-		// Override this handle if you want to do something on plugin load
+	default boolean onLoad(final WinterPlugin plugin) throws Exception {
+		// Override this handle if you want to do something on a plugin load
 		return true;
 	}
 
 	/**
 	 * Called when the plugin is enabled
-	 * <br><b>NOTE: Plugin injections is available at this point</b>
+	 * <br><b>NOTE: Plugin injections are available at this point</b>
 	 * @param plugin the plugin instance which is enabled
 	 */
-	default boolean onEnable(WinterPlugin plugin) {
-		// Override this handle if you want to do something on plugin enable
+	default boolean onEnable(final WinterPlugin plugin) throws Exception {
+		// Override this handle if you want to do something on plugin enabled
 		return true;
 	}
 
 	/**
 	 * Called when the plugin is disabled
-	 * <br><b>NOTE: Plugin injections is available at this point</b>
+	 * <br><b>NOTE: Plugin injections are available at this point</b>
 	 * @param plugin the plugin instance which is disabled
 	 */
-	default boolean onDisable(WinterPlugin plugin) {
-		// Override this handle if you want to do something on plugin disable
+	default boolean onDisable(final WinterPlugin plugin) throws Exception {
+		// Override this handle if you want to do something on plugin disabled
 		return true;
 	}
 
 	@Override
-	default void configure(Binder binder) {
+	default void configure(final Binder binder) {
 		// Override this handle if you want to bind something
 	}
 

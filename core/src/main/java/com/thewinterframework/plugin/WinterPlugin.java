@@ -3,8 +3,9 @@ package com.thewinterframework.plugin;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.thewinterframework.expression.AnnotationExpressionResolver;
+import com.thewinterframework.expression.ExpressionResolver;
 import com.thewinterframework.plugin.module.PluginModuleManager;
+import com.thewinterframework.plugin.platform.PlatformPluginManager;
 import com.thewinterframework.scheduler.PluginScheduler;
 import net.kyori.adventure.key.Namespaced;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.time.ZoneId;
 public interface WinterPlugin extends Module, Namespaced {
 
 	@Override
-	default void configure(Binder binder) {
+	default void configure(final Binder binder) {
 		// Override this handle to bind your classes
 	}
 
@@ -47,36 +48,42 @@ public interface WinterPlugin extends Module, Namespaced {
 
 	/**
 	 * Returns the plugin injector
+	 *
 	 * @return the plugin injector
 	 */
 	Injector getInjector();
 
 	/**
 	 * Returns the plugin logger
+	 *
 	 * @return the plugin logger
 	 */
 	Logger getSLF4JLogger();
 
 	/**
 	 * Returns the plugin module manager
+	 *
 	 * @return the plugin module manager
 	 */
 	PluginModuleManager getModuleManager();
 
 	/**
 	 * Returns the annotation expression resolver
+	 *
 	 * @return the annotation expression resolver
 	 */
-	AnnotationExpressionResolver getExpressionResolver();
+	ExpressionResolver getExpressionResolver();
 
 	/**
 	 * Sets the annotation expression resolver
+	 *
 	 * @param resolver the annotation expression resolver
 	 */
-	void setExpressionResolver(final AnnotationExpressionResolver resolver);
+	void setExpressionResolver(final ExpressionResolver resolver);
 
 	/**
 	 * Returns the plugin zone id
+	 *
 	 * @return the plugin zone id
 	 */
 	default ZoneId getZoneId() {
@@ -85,8 +92,16 @@ public interface WinterPlugin extends Module, Namespaced {
 
 	/**
 	 * Returns the task scheduler
+	 *
 	 * @return the task scheduler
 	 */
 	PluginScheduler getScheduler();
+
+	/**
+	 * Returns the platform plugin manager
+	 *
+	 * @return the platform plugin manager
+	 */
+	PlatformPluginManager getPlatformManager();
 
 }

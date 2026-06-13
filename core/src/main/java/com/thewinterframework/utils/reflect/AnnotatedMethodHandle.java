@@ -21,7 +21,7 @@ public record AnnotatedMethodHandle<T>(Method reflect, MethodHandle handle, T an
 	 * @param injector The injector to get the instances from.
 	 * @throws Throwable If an error occurs while invoking the method.
 	 */
-	public void invoke(Class<?> clazz, Injector injector) throws Throwable {
+	public void invoke(final Class<?> clazz, final Injector injector) throws Throwable {
 		handle.invokeWithArguments(Reflections.injectKeys(clazz, parameters, injector));
 	}
 

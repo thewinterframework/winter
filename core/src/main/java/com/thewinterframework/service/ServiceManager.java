@@ -1,5 +1,6 @@
 package com.thewinterframework.service;
 
+import com.google.inject.Binder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.service.decorator.ServiceDecorator;
 import com.thewinterframework.service.decorator.ServiceDecoratorHandler;
@@ -25,8 +26,16 @@ public class ServiceManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public void registerService(final @NotNull Class<?> service) throws IllegalAccessException, NoSuchMethodException {
-		final var serviceDecorators = Reflections.findMethodsWith(service, ServiceDecorator.class);
-		for (final var serviceDecoratorMethod : serviceDecorators) {
+		final var serviceDecorators = Reflections.findClassAnnotations(service, ServiceDecorator.class);
+		for (final var decoratorAnnotation : serviceDecorators) {
+			final var meta = decoratorAnnotation.annotationType().getAnnotation(ServiceDecorator.class);
+			final var handlerClass = meta.value();
+			final var handler = (ServiceDecoratorHandler<Annotation>) handlers.computeIfAbsent(handlerClass, this::createInstance);
+			handler.onDiscoverOnType(service, decoratorAnnotation);
+		}
+
+		final var methodServiceDecorators = Reflections.findMethodsWith(service, ServiceDecorator.class);
+		for (final var serviceDecoratorMethod : methodServiceDecorators) {
 			final var decoratorAnnotation = serviceDecoratorMethod.annotation();
 			final var handlerClass = decoratorAnnotation.value();
 
@@ -45,6 +54,16 @@ public class ServiceManager {
 	public void loadHandlers(final WinterPlugin plugin) {
 		for (final var handler : handlers.values()) {
 			handler.onPluginLoad(plugin);
+		}
+	}
+
+	/**
+	 * Configure all plugin service handlers.
+	 * @param binder The binder to configure handlers with.
+	 */
+	public void configureHandlers(final Binder binder) {
+		for (final var handler : handlers.values()) {
+			handler.onConfigure(binder);
 		}
 	}
 
@@ -103,7 +122,7 @@ public class ServiceManager {
 	private <T> T createInstance(final Class<T> clazz) {
 		try {
 			return clazz.getDeclaredConstructor().newInstance();
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new RuntimeException(e);
 		}
 	}

@@ -14,7 +14,7 @@ public abstract class SchedulerDecoratorHandler<A extends Annotation> implements
 	private final List<SchedulerMethod> registeredMethods = new ArrayList<>();
 
 	@Override
-	public void onDiscover(Class<?> service, AnnotatedMethodHandle<A> method) {
+	public void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {
 		final var annotation = method.annotation();
 		registeredMethods.add(map(service, annotation, method));
 	}
@@ -22,7 +22,7 @@ public abstract class SchedulerDecoratorHandler<A extends Annotation> implements
 	protected abstract SchedulerMethod map(Class<?> service, A annotation, AnnotatedMethodHandle<A> method);
 
 	@Override
-	public void onPluginEnable(WinterPlugin plugin) {
+	public void onPluginEnable(final WinterPlugin plugin) {
 		for (final var method : registeredMethods) {
 			method.schedule(plugin);
 		}

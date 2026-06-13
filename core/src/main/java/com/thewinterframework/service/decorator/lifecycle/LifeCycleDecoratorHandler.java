@@ -19,13 +19,13 @@ public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements
 	protected final DfsGraph<LifeCycleMethod> graph = new DfsGraph<>();
 
 	@Override
-	public final void onDiscover(Class<?> service, AnnotatedMethodHandle<A> method) {
+	public final void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {
 		final var reflect = new ReflectLifeCycleMethod(service, method, extractBeforeAnnotations(method.annotation()), extractAfterAnnotations(method.annotation()));
 		lifeCycleMethodsByService.put(service, reflect);
 	}
 
 	@Override
-	public final void onPluginLoad(WinterPlugin plugin) {
+	public final void onPluginLoad(final WinterPlugin plugin) {
 		for (final var entry : lifeCycleMethodsByService.entries()) {
 			final var lifeCycleMethod = entry.getValue();
 
@@ -62,14 +62,14 @@ public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements
 		try {
 			while (iterator.hasNext()) {
 				final var meta = iterator.next();
-				if (meta instanceof ReflectLifeCycleMethod reflectLifeCycleMethod) {
+				if (meta instanceof final ReflectLifeCycleMethod reflectLifeCycleMethod) {
 					final var method = reflectLifeCycleMethod.method();
 					method.invoke(reflectLifeCycleMethod.service(), injector);
-				} else if (meta instanceof RunnableLifeCycleMethod runnableLifeCycleMethod) {
+				} else if (meta instanceof final RunnableLifeCycleMethod runnableLifeCycleMethod) {
 					runnableLifeCycleMethod.method().run();
 				}
 			}
-		} catch (Throwable throwable) {
+		} catch (final Throwable throwable) {
 			return new LifeCycleResult(false, throwable);
 		}
 
@@ -78,7 +78,7 @@ public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements
 
 	public record LifeCycleResult(boolean result, @Nullable Throwable throwable) {}
 
-	protected abstract Class<?>[] extractAfterAnnotations(A annotation);
+	protected abstract Class<?>[] extractAfterAnnotations(final A annotation);
 
-	protected abstract Class<?>[] extractBeforeAnnotations(A annotation);
+	protected abstract Class<?>[] extractBeforeAnnotations(final A annotation);
 }

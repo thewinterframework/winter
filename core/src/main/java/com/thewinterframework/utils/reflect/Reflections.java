@@ -32,7 +32,7 @@ public class Reflections {
 	 * @throws NoSuchMethodException If the method does not exist.
 	 */
 	@SuppressWarnings("unchecked")
-	public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(Class<?> clazz, Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
+	public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(final Class<?> clazz, final Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
 		final var list = new ArrayList<AnnotatedMethodHandle<T>>();
 
 		for (final var method : clazz.getDeclaredMethods()) {
@@ -68,17 +68,36 @@ public class Reflections {
 	}
 
 	/**
+	 * Finds all annotations of a class that are annotated with a specific meta-annotation.
+	 * @param clazz The class to get the annotations from.
+	 * @param metaAnnotation The meta-annotation to get the annotations from.
+	 * @return The annotations.
+	 * @param <T> The annotation type.
+	 */
+	public static <T extends Annotation> List<T> findClassAnnotations(final Class<?> clazz, final Class<T> metaAnnotation) {
+		final var list = new ArrayList<T>();
+
+		for (final var annotation : clazz.getAnnotations()) {
+			if (annotation.annotationType().isAnnotationPresent(metaAnnotation)) {
+				list.add((T) annotation);
+			}
+		}
+
+		return list;
+	}
+
+	/**
 	 * Finds the parameters of a method.
 	 *
 	 * @param method The method to find the parameters of.
 	 * @return A list of keys representing the parameters.
 	 */
-	public static List<Key<?>> findMethodParameters(Method method) {
+	public static List<Key<?>> findMethodParameters(final Method method) {
 		final var parameters = method.getGenericParameterTypes();
 		final var typeParameters = method.getParameters();
 		final var keys = new ArrayList<Key<?>>();
 
-		for (int i = 0; i < parameters.length; i++) {
+		for (var i = 0; i < parameters.length; i++) {
 			final var untypedParameter = typeParameters[i];
 			final var typedParameter = parameters[i];
 
@@ -104,10 +123,10 @@ public class Reflections {
 	 * @param injector The injector to get the instances from.
 	 * @return The objects.
 	 */
-	public static Object[] injectKeys(Class<?> instance, List<Key<?>> keys, Injector injector) {
+	public static Object[] injectKeys(final Class<?> instance, final List<Key<?>> keys, final Injector injector) {
 		final var objects = new Object[keys.size() + 1];
 		objects[0] = injector.getInstance(instance);
-		for (int i = 0; i < keys.size(); i++) {
+		for (var i = 0; i < keys.size(); i++) {
 			objects[i + 1] = injector.getInstance(keys.get(i));
 		}
 		return objects;
@@ -121,9 +140,9 @@ public class Reflections {
 	 * @param index The index of the generic type.
 	 * @return The generic type.
 	 */
-	public static Type getGenericType(Class<?> clazz, Class<?> interfaze, int index) {
+	public static Type getGenericType(final Class<?> clazz, final Class<?> interfaze, final int index) {
 		for (final var type : clazz.getGenericInterfaces()) {
-			if (type instanceof ParameterizedType parameterizedType) {
+			if (type instanceof final ParameterizedType parameterizedType) {
 				final var rawType = parameterizedType.getRawType();
 				if (rawType instanceof Class<?> && interfaze.isAssignableFrom((Class<?>) rawType)) {
 					return parameterizedType.getActualTypeArguments()[index];
@@ -139,7 +158,7 @@ public class Reflections {
 	 * @param type The type to convert.
 	 * @return The class.
 	 */
-	public static Class<?> toClass(Type type) {
+	public static Class<?> toClass(final Type type) {
 		if (type instanceof Class) {
 			return (Class<?>) type;
 		} else if (type instanceof ParameterizedType) {
@@ -154,7 +173,7 @@ public class Reflections {
 	 * @param element The element to find the binding annotation of.
 	 * @return The binding annotation.
 	 */
-	public static Annotation findBindingAnnotation(AnnotatedElement element) {
+	public static Annotation findBindingAnnotation(final AnnotatedElement element) {
 		for (final var annotation : element.getAnnotations()) {
 			final var annotationType = annotation.annotationType();
 			if (annotationType.equals(Named.class) || annotationType.isAnnotationPresent(BindingAnnotation.class)) {

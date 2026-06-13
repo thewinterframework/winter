@@ -1,5 +1,6 @@
 package com.thewinterframework.paper.yaml;
 
+import com.thewinterframework.plugin.WinterPlugin;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -34,14 +35,14 @@ public final class YamlConfig extends YamlConfiguration {
 	 * Loads/reloads the configuration from the file to memory.
 	 *
 	 * <p>If the file doesn't exist AND this configuration reflects a default
-	 * one (from resources), the default one will copied and loaded.</p>
+	 * one (from resources), the default one will copy and loaded.</p>
 	 *
 	 * <p>All the values contained within this configuration will be removed,
 	 * leaving only settings and defaults, and the new values will be loaded
 	 * from the given string.</p>
 	 *
-	 * @throws IllegalStateException If configuration is invalid or an I/O
-	 * exception occurs.
+	 * @throws IllegalStateException If the configuration is invalid or an I/O
+	 *                               exception occurs.
 	 */
 	public void load() {
 		if (!Files.exists(path) && resource != null) {
@@ -69,8 +70,8 @@ public final class YamlConfig extends YamlConfiguration {
 	 * <p>Note that this method will try to create parent folders
 	 * if they don't exist.</p>
 	 *
-	 * @throws IllegalStateException If couldn't create file or
-	 * an I/O exception occurs.
+	 * @throws IllegalStateException If you couldn't create a file or
+	 *                               an I/O exception occurs.
 	 */
 	public void save() {
 		// create path parent dirs
@@ -96,7 +97,7 @@ public final class YamlConfig extends YamlConfiguration {
 					throw new IllegalStateException("Unable to create parent directories for " + path);
 				}
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new IllegalStateException("Failed to create parent directories for " + path, e);
 		}
 	}
@@ -108,7 +109,7 @@ public final class YamlConfig extends YamlConfiguration {
 	 *
 	 * @param path the path
 	 * @return the new configuration
-	 * @throws NullPointerException If path is null
+	 * @throws NullPointerException If a path is null
 	 */
 	public static @NotNull YamlConfig create(final @NotNull Path path) {
 		return new YamlConfig(path, null);
@@ -126,7 +127,7 @@ public final class YamlConfig extends YamlConfiguration {
 	 *
 	 * <p>The default configuration must be a plugin resource, with the same name.</p>
 	 *
-	 * @param plugin The owner plugin
+	 * @param plugin                The owner plugin
 	 * @param configurationFileName The configuration file name
 	 * @return The new configuration
 	 */
@@ -137,6 +138,10 @@ public final class YamlConfig extends YamlConfiguration {
 		final var path = plugin.getDataFolder().toPath().resolve(configurationFileName + ".yml");
 		final var config = new YamlConfig(path, resource);
 		config.load(); // first load
+
+		if (plugin instanceof final WinterPlugin winterPlugin) {
+			winterPlugin.getExpressionResolver().addContext(configurationFileName, new YamlConfigExpressionWrapper(config));
+		}
 		return config;
 	}
 }

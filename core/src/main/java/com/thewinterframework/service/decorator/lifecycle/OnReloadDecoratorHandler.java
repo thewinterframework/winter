@@ -11,12 +11,12 @@ public class OnReloadDecoratorHandler extends LifeCycleDecoratorHandler<OnReload
 	}
 
 	@Override
-	protected Class<?>[] extractAfterAnnotations(OnReload annotation) {
+	protected Class<?>[] extractAfterAnnotations(final OnReload annotation) {
 		return annotation.after();
 	}
 
 	@Override
-	protected Class<?>[] extractBeforeAnnotations(OnReload annotation) {
+	protected Class<?>[] extractBeforeAnnotations(final OnReload annotation) {
 		return annotation.before();
 	}
 

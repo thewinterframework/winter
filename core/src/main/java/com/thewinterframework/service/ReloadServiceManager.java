@@ -14,17 +14,18 @@ public class ReloadServiceManager {
 	private final WinterPlugin plugin;
 
 	@Inject
-	public ReloadServiceManager(ServiceManager serviceManager, WinterPlugin plugin) {
+	public ReloadServiceManager(final ServiceManager serviceManager, final WinterPlugin plugin) {
 		this.serviceManager = serviceManager;
 		this.plugin = plugin;
 	}
 
 	/**
 	 * Adds a service to be reloaded.
-	 * @param service The service
+	 *
+	 * @param service       The service
 	 * @param reloadService The reload service
 	 */
-	public void addOnReload(Class<?> service, Runnable reloadService) {
+	public void addOnReload(final Class<?> service, final Runnable reloadService) {
 		final var handler = serviceManager.getHandler(OnReloadDecoratorHandler.class);
 		if (handler != null) {
 			handler.addReloadMethod(service, reloadService);
