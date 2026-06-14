@@ -1,40 +1,65 @@
 package com.thewinterframework.service.meta.scheduler;
 
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.utils.Reflections.AnnotatedMethodHandle;
 import com.thewinterframework.utils.TimeUnit;
+import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Represents a repeating task method
+ *
  * @param service The service class
- * @param method The method to execute
- * @param delay The delay before the task starts
- * @param every The delay between each execution
- * @param unit The time unit of the delay
- * @param async Whether the task should be executed
+ * @param method  The method to execute
+ * @param delay   The delay before the task starts
+ * @param every   The delay between each execution
+ * @param unit    The time unit of the delay
+ * @param async   Whether the task should be executed
  */
 public record RepeatingTaskMethod(
 		Class<?> service,
 		AnnotatedMethodHandle<?> method,
-		long delay,
-		long every,
-		TimeUnit unit,
-		boolean async
+		String delay,
+		String every,
+		String unit,
+		String async
 ) implements SchedulerMethod {
 	@Override
-	public int schedule(WinterPlugin plugin) {
-		return plugin.scheduleRepeatingTask(
+	public int schedule(final WinterPlugin plugin) {
+		final var scheduler = plugin.getScheduler();
+		final var expressionResolver = plugin.getExpressionResolver();
+
+		final long delayParsed = requireNonNull(expressionResolver.resolve(delay, Long.class));
+		final long everyParsed = requireNonNull(expressionResolver.resolve(every, Long.class));
+		final var unitParsed = requireNonNull(expressionResolver.resolve(unit, TimeUnit.class));
+		final var asyncParsed = requireNonNull(expressionResolver.resolve(async, Boolean.class));
+
+		if (asyncParsed) {
+			return scheduler.runAtFixedRateAsync(
+					() -> {
+						try {
+							method.invoke(service, plugin.getInjector());
+						} catch (final Throwable e) {
+							plugin.getSLF4JLogger().error("Error while executing repeating task", e);
+						}
+					},
+					delayParsed,
+					everyParsed,
+					unitParsed
+			);
+		}
+
+		return scheduler.runAtFixedRateSync(
 				() -> {
 					try {
 						method.invoke(service, plugin.getInjector());
-					} catch (Throwable e) {
+					} catch (final Throwable e) {
 						plugin.getSLF4JLogger().error("Error while executing repeating task", e);
 					}
 				},
-				delay,
-				every,
-				unit,
-				async
+				delayParsed,
+				everyParsed,
+				unitParsed
 		);
 	}
 }

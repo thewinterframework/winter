@@ -1,31 +1,34 @@
 package com.thewinterframework.paper.listener.processor;
 
+import com.google.auto.service.AutoService;
 import com.thewinterframework.paper.listener.ListenerComponent;
 import com.thewinterframework.paper.listener.module.ListenerModule;
-import com.thewinterframework.plugin.module.PluginModule;
-import com.thewinterframework.processor.provider.ClassListProviderAnnotationProcessor;
-import org.jetbrains.annotations.Nullable;
+import com.thewinterframework.processor.clazz.ClassWireProcessor;
+import com.thewinterframework.processor.context.ProcessorContext;
+import com.thewinterframework.processor.handler.WinterAnnotationProcessor;
+import com.thewinterframework.utils.reflect.ProcessorUtils;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
-import java.util.Set;
 
 /**
  * A processor that provides a list of listener components.
  */
-public class ListenerComponentProcessor extends ClassListProviderAnnotationProcessor {
+@AutoService(WinterAnnotationProcessor.class)
+public class ListenerComponentProcessor extends ClassWireProcessor {
 	@Override
-	protected boolean filterClass(Element element) {
-		return isChild(element.asType(), "org.bukkit.event.Listener");
+	protected Class<? extends Annotation> wiredAnnotation() {
+		return ListenerComponent.class;
 	}
 
 	@Override
-	protected Set<Class<? extends Annotation>> getSupportedAnnotations() {
-		return Set.of(ListenerComponent.class);
+	public void onRoundStart(final ProcessorContext ctx) {
+		ctx.wireModule(ListenerModule.class);
 	}
 
 	@Override
-	protected @Nullable Class<? extends PluginModule> requiredModule() {
-		return ListenerModule.class;
+	protected boolean filter(final TypeElement annotation, final Element element, final ProcessorContext ctx) {
+		return ProcessorUtils.isChild(element.asType(), "org.bukkit.event.Listener");
 	}
 }

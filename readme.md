@@ -234,7 +234,7 @@ public class TestListener extends Listener {
     }
     
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(final PlayerJoinEvent event) {
         helloService.sayHello(config.getComponent("hello-message"));
     }
 }

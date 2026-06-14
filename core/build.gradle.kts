@@ -4,8 +4,7 @@ plugins {
 }
 
 repositories {
-    mavenCentral()
-    maven("https://papermc.io/repo/repository/maven-public/")
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://oss.sonatype.org/content/repositories/snapshots/")
     maven("https://repo.kryptonmc.org/releases")
 }
@@ -17,17 +16,20 @@ dependencies {
     compileOnlyApi(libs.kyori.text)
     compileOnlyApi(libs.kyori.legacy)
 
+    compileOnlyApi(libs.auto.service.annotations)
+    annotationProcessor(libs.auto.service)
+
     // Dependency Injection
     api(libs.guice)
 
     // Common
     compileOnlyApi(libs.guava)
 
-    // Graphs
-    implementation("org.jgrapht:jgrapht-core:1.5.2")
-
     // Logging
     compileOnlyApi("org.slf4j:slf4j-log4j12:1.7.29")
+
+    // Expression Language
+    implementation(libs.commons.jexl3)
 }
 
 java {

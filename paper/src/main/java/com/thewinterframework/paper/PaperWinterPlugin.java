@@ -1,11 +1,16 @@
 package com.thewinterframework.paper;
 
-import com.google.inject.Module;
 import com.google.inject.*;
+import com.google.inject.Module;
+import com.thewinterframework.expression.ExpressionResolver;
+import com.thewinterframework.expression.JexlExpressionResolver;
+import com.thewinterframework.paper.platform.PaperPlatform;
+import com.thewinterframework.paper.scheduler.PaperPluginScheduler;
 import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModuleManager;
-import com.thewinterframework.utils.TimeUnit;
+import com.thewinterframework.plugin.platform.PlatformPluginManager;
+import com.thewinterframework.scheduler.PluginScheduler;
 import net.kyori.adventure.key.KeyPattern;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -23,6 +28,11 @@ import java.util.List;
 public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlugin {
 
 	protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
+	protected final PluginScheduler scheduler = new PaperPluginScheduler(this);
+	protected final PlatformPluginManager platformPluginManager = new PaperPlatform();
+
+	protected ExpressionResolver expressionResolver = new JexlExpressionResolver();
+
 	protected @Inject Injector injector;
 
 	@Override
@@ -66,19 +76,18 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	}
 
 	@Override
-	public final int scheduleRepeatingTask(Runnable task, long delay, long period, TimeUnit unit, boolean async) {
-		final var delayTicks = unit.toTicks(delay);
-		final var periodTicks = unit.toTicks(period);
-		if (async) {
-			return Bukkit.getScheduler().runTaskTimerAsynchronously(this, task, delayTicks, periodTicks).getTaskId();
-		} else {
-			return Bukkit.getScheduler().runTaskTimer(this, task, delayTicks, periodTicks).getTaskId();
-		}
+	public PluginScheduler getScheduler() {
+		return scheduler;
 	}
 
 	@Override
-	public void cancelTask(int taskId) {
-		Bukkit.getScheduler().cancelTask(taskId);
+	public ExpressionResolver getExpressionResolver() {
+		return expressionResolver;
+	}
+
+	@Override
+	public void setExpressionResolver(final ExpressionResolver resolver) {
+		this.expressionResolver = resolver;
 	}
 
 	@Override
@@ -94,6 +103,11 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	@Override
 	public final PluginModuleManager getModuleManager() {
 		return moduleManager;
+	}
+
+	@Override
+	public PlatformPluginManager getPlatformManager() {
+		return platformPluginManager;
 	}
 
 	protected List<Module> getGuiceModules() {

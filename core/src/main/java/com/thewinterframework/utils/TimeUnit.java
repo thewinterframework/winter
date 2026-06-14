@@ -167,7 +167,7 @@ public enum TimeUnit implements TemporalUnit {
 	private final String name;
 	private final Duration duration;
 
-	TimeUnit(String name, Duration estimatedDuration) {
+	TimeUnit(final String name, final Duration estimatedDuration) {
 		this.name = name;
 		this.duration = estimatedDuration;
 	}
@@ -186,7 +186,7 @@ public enum TimeUnit implements TemporalUnit {
 		return duration;
 	}
 
-	public long toTicks(long amount) {
+	public long toTicks(final long amount) {
 		return (amount * duration.toMillis()) / 50;
 	}
 
@@ -235,19 +235,19 @@ public enum TimeUnit implements TemporalUnit {
 
 	//-----------------------------------------------------------------------
 	@Override
-	public boolean isSupportedBy(Temporal temporal) {
+	public boolean isSupportedBy(final Temporal temporal) {
 		return temporal.isSupported(this);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <R extends Temporal> R addTo(R temporal, long amount) {
+	public <R extends Temporal> R addTo(final R temporal, final long amount) {
 		return (R) temporal.plus(amount, this);
 	}
 
 	//-----------------------------------------------------------------------
 	@Override
-	public long between(Temporal temporal1Inclusive, Temporal temporal2Exclusive) {
+	public long between(final Temporal temporal1Inclusive, final Temporal temporal2Exclusive) {
 		return temporal1Inclusive.until(temporal2Exclusive, this);
 	}
 

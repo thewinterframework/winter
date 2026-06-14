@@ -1,26 +1,26 @@
 package com.thewinterframework.service.processor;
 
-import com.thewinterframework.plugin.module.PluginModule;
-import com.thewinterframework.processor.provider.ClassListProviderAnnotationProcessor;
+import com.google.auto.service.AutoService;
+import com.thewinterframework.processor.clazz.ClassWireProcessor;
+import com.thewinterframework.processor.context.ProcessorContext;
+import com.thewinterframework.processor.handler.WinterAnnotationProcessor;
 import com.thewinterframework.service.ServiceModule;
 import com.thewinterframework.service.annotation.Service;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.util.Set;
 
 /**
  * Annotation processor for {@link Service}.
  */
-public class ServiceAnnotationProcessor extends ClassListProviderAnnotationProcessor {
-
+@AutoService(WinterAnnotationProcessor.class)
+public class ServiceAnnotationProcessor extends ClassWireProcessor {
 	@Override
-	protected Set<Class<? extends Annotation>> getSupportedAnnotations() {
-		return Set.of(Service.class);
+	public void onRoundStart(final ProcessorContext ctx) {
+		ctx.wireModule(ServiceModule.class);
 	}
 
 	@Override
-	protected @Nullable Class<? extends PluginModule> requiredModule() {
-		return ServiceModule.class;
+	protected Class<? extends Annotation> wiredAnnotation() {
+		return Service.class;
 	}
 }

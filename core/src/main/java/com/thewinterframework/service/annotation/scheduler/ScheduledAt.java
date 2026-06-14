@@ -14,19 +14,19 @@ public @interface ScheduledAt {
 	 * The hour of the day to run the task
 	 * @return the hour of the day to run the task
 	 */
-	int hour();
+	String hour();
 
 	/**
 	 * The minute of the hour to run the task
 	 * @return the minute of the hour to run the task
 	 */
-	int minute() default 0;
+	String minute() default "0";
 
 	/**
 	 * The second of the minute to run the task
 	 * @return the second of the minute to run the task
 	 */
-	int second() default 0;
+	String second() default "0";
 
 	/**
 	 * Whether the task should be executed asynchronously...
@@ -34,6 +34,6 @@ public @interface ScheduledAt {
 	 * If the method has more than one ScheduledAt annotation, if this is set to true, all annotations will be executed asynchronously.
 	 * @return whether the task should be executed asynchronously
 	 */
-	boolean async() default false;
+	String async() default "false";
 
 }

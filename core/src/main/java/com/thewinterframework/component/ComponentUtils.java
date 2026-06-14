@@ -15,7 +15,7 @@ import java.util.function.UnaryOperator;
  * Utility class for working with Adventure components.
  */
 @SuppressWarnings("unused")
-public class ComponentUtils {
+public final class ComponentUtils {
 
 	/**
 	 * The MiniMessage instance used for parsing and serializing components.
@@ -40,7 +40,7 @@ public class ComponentUtils {
 	/**
 	 * The global tag resolvers, which are used when parsing MiniMessage components.
 	 */
-	private final static List<TagResolver> GLOBAL_TAG_RESOLVERS = new ArrayList<>();
+	private final static Collection<TagResolver> GLOBAL_TAG_RESOLVERS = new ArrayList<>();
 
 	/**
 	 * The component resolvers, which are used to resolve objects into components.
@@ -50,7 +50,10 @@ public class ComponentUtils {
 	/**
 	 * The component modifiers, which are used to modify components after they are resolved.
 	 */
-	private final static Set<UnaryOperator<Component>> COMPONENT_MODIFIERS = new HashSet<>();
+	private final static Collection<UnaryOperator<Component>> COMPONENT_MODIFIERS = new HashSet<>();
+
+	private ComponentUtils() {
+	}
 
 	/**
 	 * Adds a global tag resolver.
@@ -64,9 +67,9 @@ public class ComponentUtils {
 	/**
 	 * Adds a component resolver.
 	 *
-	 * @param clazz     The class to resolve.
-	 * @param resolver  The resolver to add.
-	 * @param <T>       The type of the class to resolve.
+	 * @param clazz    The class to resolve.
+	 * @param resolver The resolver to add.
+	 * @param <T>      The type of the class to resolve.
 	 */
 	public static <T> void addComponentResolver(final @NotNull Class<T> clazz, final @NotNull ComponentResolver<T> resolver) {
 		COMPONENT_RESOLVERS.put(clazz, resolver);
@@ -97,7 +100,7 @@ public class ComponentUtils {
 	 * @param components The components to serialize.
 	 * @return The serialized MiniMessage strings.
 	 */
-	public static List<String> miniMessage(final @NotNull List<Component> components) {
+	public static List<String> miniMessage(final @NotNull Collection<Component> components) {
 		return components.stream()
 				.map(ComponentUtils::miniMessage)
 				.toList();
@@ -106,9 +109,9 @@ public class ComponentUtils {
 	/**
 	 * Parses a MiniMessage string into a component.
 	 *
-	 * @param message      The message to parse.
+	 * @param message        The message to parse.
 	 * @param applyModifiers Whether to apply component modifiers.
-	 * @param tagResolvers The tag resolvers to use.
+	 * @param tagResolvers   The tag resolvers to use.
 	 * @return The parsed component.
 	 */
 	public static Component miniMessage(final @NotNull String message, final boolean applyModifiers, final @NotNull TagResolver... tagResolvers) {
@@ -125,7 +128,7 @@ public class ComponentUtils {
 	/**
 	 * Parses a MiniMessage string into a component.
 	 *
-	 * @param message    The message to parse.
+	 * @param message      The message to parse.
 	 * @param tagResolvers The tag resolvers to use.
 	 * @return The parsed component.
 	 */
@@ -136,12 +139,12 @@ public class ComponentUtils {
 	/**
 	 * Parses multiple MiniMessage strings into components.
 	 *
-	 * @param messages     The messages to parse.
+	 * @param messages       The messages to parse.
 	 * @param applyModifiers Whether to applycomponent modifiers.
-	 * @param tagResolvers The tag resolvers to use.
+	 * @param tagResolvers   The tag resolvers to use.
 	 * @return The parsed components.
 	 */
-	public static List<Component> miniMessage(final @NotNull List<String> messages, final boolean applyModifiers, final @NotNull TagResolver... tagResolvers) {
+	public static List<Component> miniMessage(final @NotNull Collection<String> messages, final boolean applyModifiers, final @NotNull TagResolver... tagResolvers) {
 		return messages.stream()
 				.map(line -> miniMessage(line, applyModifiers, tagResolvers))
 				.toList();
@@ -154,8 +157,8 @@ public class ComponentUtils {
 	 * @param tagResolvers The tag resolvers to use.
 	 * @return The parsed components.
 	 */
-	public static List<Component> miniMessage(final @NotNull List<String> messages, final @NotNull TagResolver... tagResolvers) {
-		return miniMessage(messages, false,  tagResolvers);
+	public static List<Component> miniMessage(final @NotNull Collection<String> messages, final @NotNull TagResolver... tagResolvers) {
+		return miniMessage(messages, false, tagResolvers);
 	}
 
 	/**
@@ -186,11 +189,11 @@ public class ComponentUtils {
 	/**
 	 * Serializes multiple strings into legacy section components.
 	 *
-	 * @param messages The messages to serialize.
+	 * @param messages       The messages to serialize.
 	 * @param applyModifiers Whether to apply component modifiers.
 	 * @return The serialized legacy section components.
 	 */
-	public static List<Component> legacySection(final @NotNull List<String> messages, final boolean applyModifiers) {
+	public static List<Component> legacySection(final @NotNull Collection<String> messages, final boolean applyModifiers) {
 		return messages.stream()
 				.map(line -> legacySection(line, applyModifiers))
 				.toList();
@@ -202,7 +205,7 @@ public class ComponentUtils {
 	 * @param messages The messages to serialize.
 	 * @return The serialized legacy section components.
 	 */
-	public static List<Component> legacySection(final @NotNull List<String> messages) {
+	public static List<Component> legacySection(final @NotNull Collection<String> messages) {
 		return legacySection(messages, false);
 	}
 
@@ -222,7 +225,7 @@ public class ComponentUtils {
 	 * Serializes a string into a legacy ampersand string.
 	 * This is a string where color codes are prefixed with ampersand.
 	 *
-	 * @param message The message to serialize.
+	 * @param message        The message to serialize.
 	 * @param applyModifiers Whether to apply component modifiers.
 	 * @return The serialized legacy ampersand component.
 	 */
@@ -245,11 +248,11 @@ public class ComponentUtils {
 	/**
 	 * Serializes multiple strings into legacy ampersand components.
 	 *
-	 * @param messages The messages to serialize.
+	 * @param messages       The messages to serialize.
 	 * @param applyModifiers Whether to applycomponent modifiers.
 	 * @return The serialized legacy ampersand components.
 	 */
-	public static List<Component> legacyAmpersand(final @NotNull List<String> messages, final boolean applyModifiers) {
+	public static List<Component> legacyAmpersand(final @NotNull Collection<String> messages, final boolean applyModifiers) {
 		return messages.stream()
 				.map(line -> legacyAmpersand(line, applyModifiers))
 				.toList();
@@ -261,7 +264,7 @@ public class ComponentUtils {
 	 * @param messages The messages to serialize.
 	 * @return The serialized legacy ampersand components.
 	 */
-	public static List<Component> legacyAmpersand(final @NotNull List<String> messages) {
+	public static List<Component> legacyAmpersand(final @NotNull Collection<String> messages) {
 		return legacyAmpersand(messages, false);
 	}
 
@@ -293,7 +296,7 @@ public class ComponentUtils {
 	 * @param components The components to serialize.
 	 * @return The serialized plain text components.
 	 */
-	public static List<String> plainText(final @NotNull List<Component> components) {
+	public static List<String> plainText(final @NotNull Collection<Component> components) {
 		return components.stream()
 				.map(ComponentUtils::plainText)
 				.toList();
@@ -324,26 +327,27 @@ public class ComponentUtils {
 
 	/**
 	 * Resolves an object into a component.
+	 *
 	 * @param object The object to resolve.
 	 * @return The resolved component.
 	 */
 	@SuppressWarnings("unchecked")
 	public static @NotNull Component resolve(final @NotNull Object object) {
 		switch (object) {
-			case Component component -> {
+			case final Component component -> {
 				return component;
 			}
-			case String s -> {
+			case final String s -> {
 				return Component.text(s);
 			}
-			case Number number -> {
-				if (number instanceof Double decimal) {
+			case final Number number -> {
+				if (number instanceof final Double decimal) {
 					return Component.text(NumberUtils.formatNumber(decimal, 2));
 				} else {
 					return Component.text(number.toString());
 				}
 			}
-			case Iterable<?> objects -> {
+			case final Iterable<?> objects -> {
 				final var builder = new ComponentJoiner(Component.text(", "));
 				for (final var o : objects) {
 					builder.append(resolve(o));

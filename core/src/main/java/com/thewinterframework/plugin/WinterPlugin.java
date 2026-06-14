@@ -3,20 +3,22 @@ package com.thewinterframework.plugin;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.thewinterframework.expression.ExpressionResolver;
 import com.thewinterframework.plugin.module.PluginModuleManager;
-import com.thewinterframework.utils.TimeUnit;
+import com.thewinterframework.plugin.platform.PlatformPluginManager;
+import com.thewinterframework.scheduler.PluginScheduler;
 import net.kyori.adventure.key.Namespaced;
 import org.slf4j.Logger;
 
 import java.time.ZoneId;
 
 /**
- * This class should be extended by any plugin that is used by the WinterBoot plugin.
+ * This class should be extended by any plugin that is used by the WinterBoot annotation.
  */
 public interface WinterPlugin extends Module, Namespaced {
 
 	@Override
-	default void configure(Binder binder) {
+	default void configure(final Binder binder) {
 		// Override this handle to bind your classes
 	}
 
@@ -46,24 +48,42 @@ public interface WinterPlugin extends Module, Namespaced {
 
 	/**
 	 * Returns the plugin injector
+	 *
 	 * @return the plugin injector
 	 */
 	Injector getInjector();
 
 	/**
 	 * Returns the plugin logger
+	 *
 	 * @return the plugin logger
 	 */
 	Logger getSLF4JLogger();
 
 	/**
 	 * Returns the plugin module manager
+	 *
 	 * @return the plugin module manager
 	 */
 	PluginModuleManager getModuleManager();
 
 	/**
+	 * Returns the annotation expression resolver
+	 *
+	 * @return the annotation expression resolver
+	 */
+	ExpressionResolver getExpressionResolver();
+
+	/**
+	 * Sets the annotation expression resolver
+	 *
+	 * @param resolver the annotation expression resolver
+	 */
+	void setExpressionResolver(final ExpressionResolver resolver);
+
+	/**
 	 * Returns the plugin zone id
+	 *
 	 * @return the plugin zone id
 	 */
 	default ZoneId getZoneId() {
@@ -71,21 +91,17 @@ public interface WinterPlugin extends Module, Namespaced {
 	}
 
 	/**
-	 * Schedules a task to run a/synchronously
-	 * @param task the task to run
-	 * @param delay the delay before the task starts
-	 * @param unit the time unit of the delay
-	 * @param async whether the task should run asynchronously
-	 * @return the task id
+	 * Returns the task scheduler
+	 *
+	 * @return the task scheduler
 	 */
-	//TODO: Move to SchedulerManager or something like that
-	int scheduleRepeatingTask(Runnable task, long delay, long period, TimeUnit unit, boolean async);
+	PluginScheduler getScheduler();
 
 	/**
-	 * Cancels a task
-	 * @param taskId the task id
+	 * Returns the platform plugin manager
+	 *
+	 * @return the platform plugin manager
 	 */
-	//TODO: Move to SchedulerManager or something like that
-	void cancelTask(int taskId);
+	PlatformPluginManager getPlatformManager();
 
 }
