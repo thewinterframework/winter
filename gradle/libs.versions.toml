@@ -1,7 +1,7 @@
 [versions]
 junit = "5.9.0"
 # paper
-paper = "1.21.4-R0.1-SNAPSHOT"
+paper = "1.21.4-R0.1-20250925.065901-231"
 
 # guava
 guava = "31.1-jre"

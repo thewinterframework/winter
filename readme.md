@@ -1,250 +1,235 @@
-[![Core Current](https://img.shields.io/maven-central/v/com.thewinterframework/core
-)](https://central.sonatype.com/artifact/com.thewinterframework/core)
+[![Core Current](https://img.shields.io/maven-central/v/com.thewinterframework/core)](https://central.sonatype.com/artifact/com.thewinterframework/core)
 
+# ❄️ The Winter Framework ❄️
 
-CHECK 2.0.0 BRANCH!!
+**The Winter Framework** is a modern, dependency-injection-first plugin framework for Minecraft servers. Heavily
+inspired by [Spring Boot](https://github.com/spring-projects/spring-boot), it is designed to minimize boilerplate code,
+allowing developers to focus on building features rather than managing infrastructure.
 
-# ❄️  The Winter Framework ❄️ 
-A Modern, heavily inspired by [Spring Boot](https://github.com/spring-projects/spring-boot) and easy-to-use plugin framework for Minecraft Server Software
+---
 
-## What is Winter? 🤔
-Winter is a plugin framework for Minecraft Server Software that is heavily inspired by Spring Boot. It is designed to be easy to use and to allow developers to focus on writing their plugins rather than worrying about the boilerplate code that is required to get a plugin up and running.
+## 🚀 Getting Started
 
-## Getting Started 👇
-To get started with Winter, you will need to add the Winter dependency to your project. You can do this by adding the following to your `build` file:
+To integrate Winter into your project, add the following to your `build.gradle.kts`:
 
 ```kotlin
 plugins {
-    `java-library` // MAKE SURE YOU HAVE THIS PLUGIN!! to use api scope
+    `java-library` // Required to use the 'api' scope
 }
 
 dependencies {
-    api("com.thewinterframework:[PLATFORM]:[VERSION]")
-    annotationProcessor("com.thewinterframework:[PLATFORM]:[VERSION]") // THIS IS HIGHLY IMPORTANT
+    // Replace [PLATFORM] with 'paper' and [VERSION] with your desired release
+    api("com.thewinterframework:paper:[VERSION]")
+    annotationProcessor("com.thewinterframework:paper:[VERSION]")
 }
 ```
 
-At the moment the only platform that is supported is `paper`.
+> **Note:** The `annotationProcessor` is critical for Winter's component scanning and dependency injection to function
+> correctly.
 
-## Creating a Winter Plugin 🧩
-Creating a Winter plugin is easy! All you need to do is create a class that extends `PaperWinterPlugin` and add the `@WinterBootPlugin` annotation to the class. Here is an example of a simple Winter plugin:
+---
+
+## 🧩 Creating a Winter Plugin
+
+A Winter plugin starts by defining a main class that extends `PaperWinterPlugin` and is annotated with
+`@WinterBootPlugin`.
 
 ```java
+
 @WinterBootPlugin
-public class MyPlugin extends PaperWinterPlugin {}
+public class MyPlugin extends PaperWinterPlugin {
+    // Your plugin logic here
+}
 ```
 
-(in the most cases your main class will be like this everytime, wow that's so clean!)
+---
 
-## Creating your first Plugin Module
-Winter allows you to create plugin modules that can be loaded, enabled and disabled at runtime. To create a plugin module, you need to create a class that implements `PluginModule` and add the `@ModuleComponent` annotation to the class. Here is an example of a simple plugin module:
+## 📦 Plugin Modules
+
+Plugin Modules allow you to encapsulate functionality and hook into the plugin lifecycle. By implementing
+`PluginModule`, you gain access to `onLoad`, `onEnable`, and `onDisable` hooks. Since `PluginModule` extends Guice's
+`Module` class, you can perform manual dependency bindings here.
 
 ```java
+
 @ModuleComponent
 public class TestModule implements PluginModule {
 
     @Override
-    public boolean onLoad(WinterPlugin plugin) {
-        plugin.getSLF4JLogger().info("TestModule has been loaded!");
-        return true;
-    }
-    
-    @Override
-    public boolean onEnable(WinterPlugin plugin) {
-        plugin.getSLF4JLogger().info("TestModule has been enabled!");
-        return true;
-    }
-
-    @Override
-    public boolean onDisable(WinterPlugin plugin) {
-        plugin.getSLF4JLogger().info("TestModule has been disabled!");
+    public boolean onEnable(final WinterPlugin plugin) {
+        plugin.getSLF4JLogger().info("Module enabled!");
         return true;
     }
 }
 ```
-
-other thing that you need to know is that a `PluginModule` extends `Module` class from [Guice](https://github.com/google/guice), this means that you can bind your dependencies in the module!
 
 > [!CAUTION]
-> `onLoad` is called before the guice module is installed in plugin injector. `onEnable` and `onDisable` are called after the guice module is installed in plugin injector so you can use `@Inject` / injections in `onEnable` and `onDisable` methods.
+> `onLoad` runs **before** the Guice injector is initialized. `onEnable` and `onDisable` run **after** the injector is
+> ready, allowing you to safely use `@Inject` within those methods.
 
-> [!NOTE]
-> If you don't know what is guice, you can read the [documentation](https://github.com/google/guice/wiki/GettingStarted)
+---
 
-and that's it! you have created your first Plugin Module.
+## ⚙️ Services & Lifecycle
 
-Although in most plugins you won't use it because you can use pre-made modules for [commands](https://github.com/thewinterframework/command), listeners (which is already included in the platform module), [configurations](https://github.com/thewinterframework/configuration) and more!
+### Defining Services
 
-## Creating your first Service
-Winter allows you to create services that can be injected into your plugin modules. To create a service, you need to create a class that is annotated with `@Service`. Here is an example of a simple service:
+Annotate a class with `@Service` to register it as a Singleton managed by Winter.
 
 ```java
-@Service
-public class MyFirstService {
-}
-```
-`@Service` annotation marks your class as Singleton class! <br>
 
-You can use `@Inject` annotation to inject your dependencies in the service class!
-```java
 @Service
 public class MyFirstService {
-    
     private final Plugin plugin;
-    
+
     @Inject
-    public MyFirstService(Plugin plugin) {
+    public MyFirstService(final Plugin plugin) {
         this.plugin = plugin;
     }
-    
-    public void doSomething() {
-        plugin.getLogger().info("Hello from MyFirstService!");
-    }
-    
 }
 ```
 
-### Service LifeCycle Annotations
-In your service you can annotate your methods with `@OnEnable` and `@OnDisable` annotations to run your methods when the service is enabled or disabled
+### Lifecycle Hooks
+
+Use `@OnEnable` and `@OnDisable` to handle setup and teardown logic. These methods support automatic parameter
+injection.
 
 ```java
-@Service
-public class MyFirstService {
-    
-    private final Plugin plugin;
-    
-    @Inject
-    public MyFirstService(Plugin plugin) {
-        this.plugin = plugin;
-    }
-    
-    @OnEnable
-    public void doSomething() {
-        plugin.getLogger().info("Hello from MyFirstService!");
-    }
-}
-```
-now `doSomething` method will be called when the service is enabled!
 
-LifeCycle methods parameters are injected so you can add parameters to your methods!
-```java
-@Service
-public class MyFirstService {
-    @OnEnable
-    void hello(Logger logger) {
-        logger.info("Hello from MyFirstService!");
-    }
-    
-    @OnDisable
-    void goodBye(Logger logger) {
-        logger.info("Goodbye from MyFirstService!");
-    }
-}
-```
-
-is it cool!, isn't it?
-
-in a real example you can use lifecycle methods to load data from a file when the service is enabled!
-
-```java
 @Service
 public class WarpService {
-
-    private final Map<String, Warp> warpCache = new HashMap<>();
-
     @OnEnable
-    void loadWarps(WarpStorage storage, Logger logger) {
-        warpCache.putAll(storage.loadWarps());
-        logger.info("Warps loaded!");
-    }
-
-    @OnDisable
-    void clearCache(Logger logger) {
-        warpCache.clear();
-        logger.info("Warps cleared!");
+    void loadWarps(final WarpStorage storage, final Logger logger) {
+        // Logic executed upon service initialization
     }
 }
 ```
 
-### Service Schedulers
-You can use `@RepeatingTask` annotation to run your method in a repeating task!
+---
+
+## ⏱️ Task Schedulers
+
+Winter simplifies task scheduling through method-level decorators:
+
+* **`@RepeatingTask`**: Executes a method at specific intervals.
+* **`@ScheduledAt`**: Executes a method at a specific time (e.g., daily).
 
 ```java
+
+@RepeatingTask(every = "1", unit = "MINUTES", async = "true")
+public void broadcastMessage(final MyOtherService service) {
+    service.broadcast("Hello World!");
+}
+```
+
+---
+
+## 💡 Advanced Features
+
+### Primary Implementations
+
+If multiple services implement the same interface, use `@Primary` to define which one should be injected by default.
+
+```java
+
 @Service
-public class WarpService {
-
-    private final Map<String, Warp> warpCache = new HashMap<>();
-
-    @RepeatingTask(every = 1, unit = TimeUnit.MINUTES, async = true)
-    void helloVisitors(MyOtherService broadCastService) {
-        broadCastService.broadcast("Hello Visitors!");
-    }
-    
-    @OnEnable
-    void loadWarps(WarpStorage storage, Logger logger) {
-        warpCache.putAll(storage.loadWarps());
-        logger.info("Warps loaded!");
-    }
-
-    @OnDisable
-    void clearCache(Logger logger) {
-        warpCache.clear();
-        logger.info("Warps cleared!");
-    }
+@Primary
+public class DefaultMessageHandler implements MessageHandler { ...
 }
 ```
 
-## Registering your Listener
-Winter allows you to create listeners that can be registered with the server. To create a listener, you need to create a class that extends `Listener` and add the `@ListenerComponent` annotation to the class. Here is an example of a simple listener:
+### Annotation Expressions
+
+Winter supports [JEXL](https://commons.apache.org/proper/commons-jexl/) within annotations, allowing for dynamic
+configuration values.
 
 ```java
-@ListenerComponent
-public class TestListener extends Listener {
 
-    private final HelloService helloService;
-    
-    @Inject
-    public TestListener(HelloService helloService) {
-        this.helloService = helloService;
-    }
-    
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        helloService.sayHello(event.getPlayer());
-    }
-}
+@RepeatingTask(every = "settings.timerInterval() * 2", unit = "SECONDS")
+public void timer() { ...}
 ```
 
-and that's it! you have created your first Listener.
+### Conditional Loading
 
-## Using Bukkit API Yaml Files
-Winter allows you to use Bukkit API Yaml Files to store your configurations. To use a Bukkit API Yaml File, you need to inject a `YamlConfig` object in your component and use the `@FileName` annotation to specify the name of the file. Here is an example of a simple Yaml File:
+Use conditional annotations to control whether a component should be registered.
 
 ```java
-@ListenerComponent
-public class TestListener extends Listener {
 
-    private final HelloService helloService;
-    private final YamlConfig config;
-    
-    @Inject
-    public TestListener(
-            HelloService helloService,
-            @FileName("config.yml") YamlConfig config
-    ) {
-        this.helloService = helloService;
+@ListenerComponent
+@RequiresExpr("settings.joinEnabled()")
+public class JoinListener implements Listener { ...
+}
+```
+
+---
+
+## 🛠️ Custom Decorators & Conditions
+
+### 1. Creating Custom Service Decorators
+
+Service decorators allow you to modify or intercept the lifecycle of a service registration.
+
+**The Handler:**
+
+```java
+public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
+    @Override
+    public Class<Primary> getAnnotationType() {
+        return Primary.class;
     }
-    
-    @EventHandler
-    public void onPlayerJoin(final PlayerJoinEvent event) {
-        helloService.sayHello(config.getComponent("hello-message"));
+
+    @Override
+    public void onDiscoverOnType(final Class<?> service, final Primary annotation) {
+        // Logic to modify binding
     }
 }
 ```
 
-and that's it!, if you use @FileName annotation your Yaml file will be created automatically in the plugin data folder!
+**The Annotation:**
 
-Also check out the [SpongePowered Configurate Module](https://github.com/thewinterframework/configuration) for more advanced configuration options!
+```java
 
-## Using Commands
-You can use the [Winter Command Module](https://github.com/thewinterframework/command) to create auto-registered commands using [incendo cloud](https://github.com/Incendo/cloud)
+@Target({ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@ServiceDecorator(PrimaryHandler.class)
+public @interface Primary {
+    Class<?> value() default Void.class;
+}
+```
+
+### 2. Creating Custom Conditional Annotations
+
+**The Condition:**
+
+```java
+public class RequiresExpressionCondition implements ComponentCondition {
+    @Override
+    public boolean matches(final ConditionContext context, final Annotation rawAnnotation) {
+        final var annotation = (RequiresExpr) rawAnnotation;
+        final var resolver = context.getPlugin().getExpressionResolver();
+        return Boolean.TRUE.equals(resolver.resolve(annotation.value(), Boolean.class));
+    }
+}
+```
+
+**The Annotation:**
+
+```java
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Requires(RequiresExpressionCondition.class)
+public @interface RequiresExpr {
+    String value();
+}
+```
+
+---
+
+## 📂 Configuration & Commands
+
+* **YamlConfig**: Inject `YamlConfig` into any component and use the `@FileName` annotation to bind it to a file.
+* **Commands**: Integrate the [Winter Command Module](https://github.com/thewinterframework/command) to
+  leverage [Incendo Cloud](https://github.com/Incendo/cloud) for clean, auto-registered command structures.
+
+> **Tip:** For advanced file handling, we highly recommend
+> the [SpongePowered Configurate Module](https://github.com/thewinterframework/configuration).
