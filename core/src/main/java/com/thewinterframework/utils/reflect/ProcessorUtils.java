@@ -11,6 +11,16 @@ public final class ProcessorUtils {
 	private ProcessorUtils() {
 	}
 
+	public enum ProjectType {
+		API,
+		IMPL
+	}
+
+	public static ProjectType getProjectType(final ProcessingEnvironment env) {
+		final var typeRaw = env.getOptions().getOrDefault("plugin.type", "IMPL");
+		return ProjectType.valueOf(typeRaw.toUpperCase());
+	}
+
 	public static boolean isChild(final TypeMirror child, final String rootQualifiedName) {
 		final var childType = (DeclaredType) child;
 		final var childElement = (TypeElement) childType.asElement();

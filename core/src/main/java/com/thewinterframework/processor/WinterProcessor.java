@@ -7,6 +7,7 @@ import com.thewinterframework.processor.context.ProcessorContext;
 import com.thewinterframework.processor.handler.WinterAnnotationProcessor;
 import com.thewinterframework.processor.template.TemplateBuilder;
 import com.thewinterframework.processor.wire.ClassListWire;
+import com.thewinterframework.utils.reflect.ProcessorUtils;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -36,18 +37,27 @@ public class WinterProcessor extends AbstractProcessor {
 
 	private Element loadPluginClass(final RoundEnvironment roundEnv) {
 		if (this.pluginClass == null) {
-			this.pluginClass = roundEnv.getElementsAnnotatedWith(
-					processingEnv.getElementUtils()
-							.getTypeElement(WinterBootPlugin.class.getCanonicalName())
-			).stream().findFirst().orElse(null);
+			this.pluginClass = getPluginClass(roundEnv, processingEnv);
 		}
 
 		return this.pluginClass;
 	}
 
+	public static Element getPluginClass(final RoundEnvironment roundEnv, final ProcessingEnvironment processingEnv) {
+		return roundEnv.getElementsAnnotatedWith(
+				processingEnv
+						.getElementUtils()
+						.getTypeElement(WinterBootPlugin.class.getCanonicalName())
+		).stream().findFirst().orElse(null);
+	}
+
 	@Override
 	public synchronized void init(final ProcessingEnvironment env) {
 		super.init(env);
+
+		if (ProcessorUtils.getProjectType(env) == ProcessorUtils.ProjectType.API) {
+			return;
+		}
 
 		this.handlers = loadHandlers();
 		this.handlers.forEach(h -> h.onInit(env));
@@ -64,6 +74,10 @@ public class WinterProcessor extends AbstractProcessor {
 
 	@Override
 	public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
+		if (ProcessorUtils.getProjectType(processingEnv) == ProcessorUtils.ProjectType.API) {
+			return false;
+		}
+
 		if (loadPluginClass(roundEnv) == null) {
 			processingEnv.getMessager().printError(WinterBootPlugin.class.getCanonicalName() + " annotation not found in project!");
 			return false;

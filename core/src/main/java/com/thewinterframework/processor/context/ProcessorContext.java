@@ -52,6 +52,10 @@ public class ProcessorContext {
 		return elements().getPackageOf(pluginClass);
 	}
 
+	public Element getPluginClass() {
+		return pluginClass;
+	}
+
 	public String getPluginPackageString() {
 		return getPluginPackage().getQualifiedName().toString();
 	}
@@ -74,6 +78,14 @@ public class ProcessorContext {
 
 	public void wireModule(final String module) {
 		requiredModules.add(module);
+	}
+
+	public ProcessingEnvironment getEnv() {
+		return env;
+	}
+
+	public RoundEnvironment getRoundEnv() {
+		return roundEnv;
 	}
 
 	public Set<String> getRequiredModules() {
