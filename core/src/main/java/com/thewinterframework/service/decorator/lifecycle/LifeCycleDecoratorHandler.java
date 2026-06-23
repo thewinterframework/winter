@@ -40,6 +40,8 @@ public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements
 					graph.addAfter(lifeCycleMethod, afterMethod);
 				}
 			}
+
+			graph.addNode(lifeCycleMethod);
 		}
 	}
 
@@ -76,7 +78,8 @@ public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements
 		return new LifeCycleResult(true, null);
 	}
 
-	public record LifeCycleResult(boolean result, @Nullable Throwable throwable) {}
+	public record LifeCycleResult(boolean result, @Nullable Throwable throwable) {
+	}
 
 	protected abstract Class<?>[] extractAfterAnnotations(final A annotation);
 
