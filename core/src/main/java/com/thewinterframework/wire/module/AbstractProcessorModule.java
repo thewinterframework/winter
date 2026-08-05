@@ -14,6 +14,8 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.HashSet;
 import java.util.Set;
 
+import static java.lang.Class.forName;
+
 public abstract class AbstractProcessorModule implements ProcessorModule {
 
 	protected final Set<Class<?>> activeComponents = new HashSet<>();
@@ -29,7 +31,7 @@ public abstract class AbstractProcessorModule implements ProcessorModule {
 			return;
 		}
 
-		final var wiredClass = Class.forName(ClassWireProcessor.canonicalWiredClassName(plugin, moduleAnnotation));
+		final var wiredClass = forName(ClassWireProcessor.canonicalWiredClassName(plugin, moduleAnnotation), true, plugin.getClass().getClassLoader());
 		this.wire = (ClassListWire) wiredClass.getConstructors()[0].newInstance();
 	}
 
