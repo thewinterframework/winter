@@ -22,7 +22,7 @@ public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
 	public void onDiscoverOnType(final Class<?> service, final Primary annotation) {
 		final var superType = annotation.value();
 		if (superType != Void.class) {
-			bindAsMap.put(annotation.value(), superType);
+			bindAsMap.put(superType, service);
 			return;
 		}
 
