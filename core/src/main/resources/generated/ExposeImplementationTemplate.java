@@ -13,7 +13,7 @@ public class Default<PLUGIN>API implements <PLUGIN>API {
 
 	<el>
 		@Override
-		public <TYPE> get<TYPE_NAME>() {
+		public <TYPE> <METHOD_NAME>() {
 			return injector.getInstance(<TYPE>.class);
 		}
 	</el>
