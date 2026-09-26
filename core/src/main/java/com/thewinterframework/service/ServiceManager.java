@@ -1,137 +1,50 @@
 package com.thewinterframework.service;
 
 import com.google.inject.Binder;
+import com.thewinterframework.component.ComponentManager;
+import com.thewinterframework.component.meta.ComponentDescriptor;
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.service.decorator.ServiceDecorator;
 import com.thewinterframework.service.decorator.ServiceDecoratorHandler;
-import com.thewinterframework.utils.reflect.Reflections;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * <p> This class is responsible for managing services. </p>
+ * Compatibility facade for the pre-3.0 service registry.
+ *
+ * @deprecated Inject {@link ComponentManager} instead.
  */
-public class ServiceManager {
+@Deprecated(forRemoval = false)
+public class ServiceManager extends ComponentManager {
 
-	private final Map<Class<? extends ServiceDecoratorHandler<?>>, ServiceDecoratorHandler<?>> handlers = new HashMap<>();
-	private final Set<Class<?>> registeredServices = new HashSet<>();
-
-	/**
-	 * Register a service with the service manager.
-	 *
-	 * @param service The service to register.
-	 */
-	@SuppressWarnings("unchecked")
-	public void registerService(final @NotNull Class<?> service) throws IllegalAccessException, NoSuchMethodException {
-		final var serviceDecorators = Reflections.findClassAnnotations(service, ServiceDecorator.class);
-		for (final var decoratorAnnotation : serviceDecorators) {
-			final var serviceDecorator = decoratorAnnotation.annotationType().getAnnotation(ServiceDecorator.class);
-			final var handler = (ServiceDecoratorHandler<Annotation>) handlers.computeIfAbsent(serviceDecorator.value(), this::createInstance);
-			handler.onDiscoverOnType(service, decoratorAnnotation);
-		}
-
-		final var methodServiceDecorators = Reflections.findMethodsWith(service, ServiceDecorator.class);
-		for (final var serviceDecoratorMethod : methodServiceDecorators) {
-			final var decoratorAnnotation = serviceDecoratorMethod.annotation();
-			final var handlerClass = decoratorAnnotation.value();
-
-			final var handler = (ServiceDecoratorHandler<Annotation>) handlers.computeIfAbsent(handlerClass, this::createInstance);
-			final var annotatedMethod = serviceDecoratorMethod.annotatedWith(handler.getAnnotationType());
-			handler.onDiscover(service, annotatedMethod);
-		}
-
-		registeredServices.add(service);
+	public void registerService(final @NotNull Class<?> service) throws ReflectiveOperationException {
+		registerComponent(ComponentDescriptor.from(service));
 	}
 
-	/**
-	 * Load all plugin service handlers.
-	 *
-	 * @param plugin The plugin to load handlers for.
-	 */
 	public void loadHandlers(final WinterPlugin plugin) {
-		for (final var handler : handlers.values()) {
-			handler.onPluginLoad(plugin);
-		}
+		loadDecorators(plugin);
 	}
 
-	/**
-	 * Configure all plugin service handlers.
-	 *
-	 * @param binder The binder to configure handlers with.
-	 */
 	public void configureHandlers(final Binder binder) {
-		for (final var handler : handlers.values()) {
-			handler.onConfigure(binder);
-		}
+		configureDecorators(binder);
 	}
 
-	/**
-	 * Start all plugin service handlers.
-	 *
-	 * @param plugin The plugin to start handlers for.
-	 */
 	public void startHandlers(final WinterPlugin plugin) {
-		for (final var handler : handlers.values()) {
-			handler.onPluginEnable(plugin);
-		}
+		enableDecorators(plugin);
 	}
 
-	/**
-	 * Stop all plugin service handlers.
-	 *
-	 * @param plugin The plugin to stop handlers for.
-	 */
 	public void stopHandlers(final WinterPlugin plugin) {
-		for (final var handler : handlers.values()) {
-			handler.onPluginDisable(plugin);
-		}
+		disableDecorators(plugin);
 	}
 
-	/**
-	 * Get a handler by its class.
-	 *
-	 * @param handlerClass The handler class.
-	 * @param <T>          The type of the handler.
-	 * @return The handler instance or null if not found.
-	 */
 	@Nullable
-	public <T extends ServiceDecoratorHandler<?>> T getHandler(final Class<T> handlerClass) {
-		final var handler = handlers.get(handlerClass);
-		if (handler == null) {
-			return null;
-		}
-
-		return handlerClass.cast(handler);
+	public <T extends ServiceDecoratorHandler<?>> T getHandler(final Class<T> handlerType) {
+		return getDecorator(handlerType);
 	}
 
-	/**
-	 * Get the services.
-	 *
-	 * @return The services.
-	 */
 	public Set<Class<?>> services() {
-		return registeredServices;
+		return components().stream().map(ComponentDescriptor::type).collect(Collectors.toUnmodifiableSet());
 	}
-
-	/**
-	 * Creates an instance of the given class.
-	 *
-	 * @param clazz the class to create an instance of.
-	 * @param <T>   the type of the class.
-	 * @return an instance of the given class.
-	 */
-	private <T> T createInstance(final Class<T> clazz) {
-		try {
-			return clazz.getDeclaredConstructor().newInstance();
-		} catch (final Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
 }

@@ -1,6 +1,6 @@
 package com.thewinterframework.service.annotation.scheduler;
 
-import com.thewinterframework.service.decorator.ServiceDecorator;
+import com.thewinterframework.component.decorator.ComponentDecorator;
 import com.thewinterframework.service.decorator.scheduler.RepeatingTaskDecoratorHandler;
 import com.thewinterframework.service.decorator.scheduler.SchedulerDecoratorHandler;
 
@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@ServiceDecorator(RepeatingTaskDecoratorHandler.class)
+@ComponentDecorator(RepeatingTaskDecoratorHandler.class)
 public @interface RepeatingTask {
 
 	/**

@@ -1,5 +1,8 @@
 package com.thewinterframework.service.annotation.scheduler;
 
+import com.thewinterframework.component.decorator.ComponentDecorator;
+import com.thewinterframework.service.decorator.scheduler.SingleScheduledAtDecoratorHandler;
+
 import java.lang.annotation.*;
 
 /**
@@ -8,6 +11,7 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(ScheduledAtContainer.class)
+@ComponentDecorator(SingleScheduledAtDecoratorHandler.class)
 public @interface ScheduledAt {
 
 	/**

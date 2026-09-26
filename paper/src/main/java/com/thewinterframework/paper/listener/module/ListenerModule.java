@@ -1,7 +1,6 @@
 package com.thewinterframework.paper.listener.module;
 
 import com.google.inject.Binder;
-import com.google.inject.Scopes;
 import com.thewinterframework.paper.listener.ListenerComponent;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
@@ -21,7 +20,6 @@ public class ListenerModule extends AbstractProcessorModule {
 
 	@Override
 	public void configure(final Binder binder) {
-		binder.bindScope(ListenerComponent.class, Scopes.SINGLETON);
 	}
 
 	@Override

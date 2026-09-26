@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
+@Deprecated(forRemoval = false)
 public @interface ServiceDecorator {
 	/**
 	 * The handler class that will process the decorator.

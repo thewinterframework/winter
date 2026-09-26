@@ -1,11 +1,9 @@
 package com.thewinterframework.paper.listener.processor;
 
-import com.google.auto.service.AutoService;
 import com.thewinterframework.paper.listener.ListenerComponent;
 import com.thewinterframework.paper.listener.module.ListenerModule;
 import com.thewinterframework.processor.clazz.ClassWireProcessor;
 import com.thewinterframework.processor.context.ProcessorContext;
-import com.thewinterframework.processor.handler.WinterAnnotationProcessor;
 import com.thewinterframework.utils.reflect.ProcessorUtils;
 
 import javax.lang.model.element.Element;
@@ -15,7 +13,7 @@ import java.lang.annotation.Annotation;
 /**
  * A processor that provides a list of listener components.
  */
-@AutoService(WinterAnnotationProcessor.class)
+@Deprecated(forRemoval = false)
 public class ListenerComponentProcessor extends ClassWireProcessor {
 	@Override
 	protected Class<? extends Annotation> wiredAnnotation() {
