@@ -2,6 +2,7 @@ package com.thewinterframework.service;
 
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
+import com.thewinterframework.component.ComponentManager;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.service.annotation.Service;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
@@ -20,7 +21,7 @@ public class ServiceModule extends AbstractProcessorModule {
 
 	@Override
 	public void configure(final Binder binder) {
-		binder.bindScope(Service.class, Scopes.SINGLETON);
+		binder.bind(ComponentManager.class).toInstance(serviceManager);
 		binder.bind(ServiceManager.class).toInstance(serviceManager);
 		binder.bind(ReloadServiceManager.class).in(Scopes.SINGLETON);
 

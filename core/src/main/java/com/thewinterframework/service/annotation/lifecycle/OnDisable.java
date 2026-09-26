@@ -1,7 +1,7 @@
 package com.thewinterframework.service.annotation.lifecycle;
 
 import com.thewinterframework.service.annotation.Service;
-import com.thewinterframework.service.decorator.ServiceDecorator;
+import com.thewinterframework.component.decorator.ComponentDecorator;
 import com.thewinterframework.service.decorator.lifecycle.OnDisableDecoratorHandler;
 
 import java.lang.annotation.ElementType;
@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-@ServiceDecorator(OnDisableDecoratorHandler.class)
+@ComponentDecorator(OnDisableDecoratorHandler.class)
 public @interface OnDisable {
 
 	/**

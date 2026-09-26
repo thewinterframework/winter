@@ -1,6 +1,6 @@
 package com.thewinterframework.service.annotation.injection;
 
-import com.thewinterframework.service.decorator.ServiceDecorator;
+import com.thewinterframework.component.decorator.ComponentDecorator;
 import com.thewinterframework.service.decorator.injection.PrimaryHandler;
 
 import java.lang.annotation.ElementType;
@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@ServiceDecorator(PrimaryHandler.class)
+@ComponentDecorator(PrimaryHandler.class)
 public @interface Primary {
 	Class<?> value() default Void.class;
 }

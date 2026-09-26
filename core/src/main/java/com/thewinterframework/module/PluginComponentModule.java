@@ -1,7 +1,6 @@
 package com.thewinterframework.module;
 
 import com.google.inject.Binder;
-import com.google.inject.Scopes;
 import com.thewinterframework.module.annotation.ModuleComponent;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModule;
@@ -53,6 +52,5 @@ public class PluginComponentModule extends AbstractProcessorModule {
 
 	@Override
 	public void configure(final Binder binder) {
-		binder.bindScope(ModuleComponent.class, Scopes.SINGLETON);
 	}
 }

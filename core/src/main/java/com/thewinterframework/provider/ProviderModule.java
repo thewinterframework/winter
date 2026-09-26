@@ -2,7 +2,6 @@ package com.thewinterframework.provider;
 
 import com.google.inject.Binder;
 import com.google.inject.Provider;
-import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.thewinterframework.provider.annotation.ProviderComponent;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
@@ -17,7 +16,6 @@ public class ProviderModule extends AbstractProcessorModule {
 
 	@Override
 	public void configure(final Binder binder) {
-		binder.bindScope(ProviderComponent.class, Scopes.SINGLETON);
 		for (final var providerClass : this.activeComponents) {
 			bindProvider(binder, (Class<? extends Provider<Object>>) providerClass);
 		}
