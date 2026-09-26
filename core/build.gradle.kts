@@ -34,6 +34,7 @@ dependencies {
 	// Tests
 	testImplementation(libs.junit.api)
 	testRuntimeOnly(libs.junit.engine)
+	testRuntimeOnly(libs.adventure)
 }
 
 tasks.test {

@@ -201,6 +201,13 @@ Interceptors wrap `LOAD`, `ENABLE`, and `DISABLE` for a component:
 ```java
 public final class TimingInterceptor implements ComponentInterceptor {
     @Override
+    public ComponentDecision decide(final ComponentContext context) {
+        return featureFlags.isEnabled(context.componentType())
+                ? ComponentDecision.CONTINUE
+                : ComponentDecision.DISCARD;
+    }
+
+    @Override
     public void before(final ComponentPhase phase, final ComponentContext context) {
         // Start timing.
     }
@@ -218,6 +225,10 @@ public final class TimedComponent {
 
 Interceptors declared with `ServiceLoader` are global. Explicit interceptors apply only to the component that declares
 them. Failure callbacks receive the phase, component context, and original exception.
+
+`decide` is the admission gate. Returning `DISCARD` prevents the candidate from being registered, bound in Guice, or
+passed to component handlers and lifecycle callbacks. The decision runs during `LOAD`, before the injector exists, so
+it must use descriptor metadata, plugin configuration, or other load-safe state rather than `context.instance()`.
 
 ## Component decorators
 
@@ -237,6 +248,13 @@ public final class AuditedHandler implements ComponentDecoratorHandler<Audited> 
     }
 
     @Override
+    public ComponentDecision decide(final ComponentContext context) {
+        return isSupported(context.descriptor())
+                ? ComponentDecision.CONTINUE
+                : ComponentDecision.DISCARD;
+    }
+
+    @Override
     public void onDiscover(
             final Class<?> component,
             final AnnotatedMethodHandle<Audited> method
@@ -245,6 +263,10 @@ public final class AuditedHandler implements ComponentDecoratorHandler<Audited> 
     }
 }
 ```
+
+Decorator decisions use the same admission semantics as interceptor decisions. Winter evaluates all applicable
+interceptors first and then each decorator handler in deterministic class-name order. The first `DISCARD` stops
+registration, and decorator discovery callbacks are not invoked for that component.
 
 `@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` now use this component-wide
 pipeline. The old `ServiceDecorator` API remains available for binary migration.

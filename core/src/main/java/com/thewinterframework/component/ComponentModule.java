@@ -57,8 +57,15 @@ public final class ComponentModule extends AbstractProcessorModule {
 				continue;
 			}
 
-			componentManager.registerComponent(descriptor);
-			registerExplicitExtensions(descriptor);
+			registerExplicitInterceptors(descriptor);
+			if (!componentManager.registerComponent(
+					new ComponentContext(plugin, descriptor),
+					selectedInterceptors(descriptor)
+			)) {
+				plugin.getSLF4JLogger().debug("Discarded component during admission: {}", componentType.getName());
+				continue;
+			}
+			registerExplicitHandlers(descriptor);
 			discovered.add(descriptor);
 		}
 
@@ -127,8 +134,11 @@ public final class ComponentModule extends AbstractProcessorModule {
 				});
 	}
 
-	private void registerExplicitExtensions(final ComponentDescriptor component) {
+	private void registerExplicitHandlers(final ComponentDescriptor component) {
 		component.handlers().forEach(handler -> handlers.computeIfAbsent(handler, this::createInstance));
+	}
+
+	private void registerExplicitInterceptors(final ComponentDescriptor component) {
 		component.interceptors().forEach(interceptor -> interceptors.computeIfAbsent(interceptor, this::createInstance));
 	}
 
@@ -149,6 +159,17 @@ public final class ComponentModule extends AbstractProcessorModule {
 
 	private boolean supports(final ComponentHandler handler, final ComponentDescriptor component) {
 		return component.handlers().contains(handler.getClass()) || handler.supports(component.type());
+	}
+
+	private List<ComponentInterceptor> selectedInterceptors(final ComponentDescriptor component) {
+		final var selectedInterceptorTypes = new HashSet<>(globalInterceptors);
+		selectedInterceptorTypes.addAll(component.interceptors());
+		return selectedInterceptorTypes.stream()
+				.map(interceptors::get)
+				.filter(java.util.Objects::nonNull)
+				.sorted(Comparator.comparingInt(ComponentInterceptor::order)
+						.thenComparing(interceptor -> interceptor.getClass().getName()))
+				.toList();
 	}
 
 	private void runPhase(
@@ -203,13 +224,7 @@ public final class ComponentModule extends AbstractProcessorModule {
 			final ComponentDescriptor component
 	) {
 		final var context = new ComponentContext(plugin, component);
-		final var selectedInterceptorTypes = new HashSet<>(globalInterceptors);
-		selectedInterceptorTypes.addAll(component.interceptors());
-		final var selectedInterceptors = selectedInterceptorTypes.stream()
-				.map(interceptors::get)
-				.filter(java.util.Objects::nonNull)
-				.sorted(Comparator.comparingInt(ComponentInterceptor::order))
-				.toList();
+		final var selectedInterceptors = selectedInterceptors(component);
 
 		try {
 			for (final var interceptor : selectedInterceptors) {
