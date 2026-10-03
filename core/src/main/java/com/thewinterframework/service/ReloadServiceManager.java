@@ -26,10 +26,8 @@ public class ReloadServiceManager {
 	 * @param reloadService The reload service
 	 */
 	public void addOnReload(final Class<?> service, final Runnable reloadService) {
-		final var handler = serviceManager.getHandler(OnReloadDecoratorHandler.class);
-		if (handler != null) {
-			handler.addReloadMethod(service, reloadService);
-		}
+		final var handler = serviceManager.getOrCreateHandler(OnReloadDecoratorHandler.class);
+		handler.addReloadMethod(service, reloadService);
 	}
 
 	/**

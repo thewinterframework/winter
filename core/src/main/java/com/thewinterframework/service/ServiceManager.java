@@ -102,12 +102,33 @@ public class ServiceManager {
 	 */
 	@Nullable
 	public <T extends ServiceDecoratorHandler<?>> T getHandler(final Class<T> handlerClass) {
-		final var handler = handlers.get(handlerClass);
+		final var handler = this.handlers.get(handlerClass);
 		if (handler == null) {
 			return null;
 		}
 
 		return handlerClass.cast(handler);
+	}
+
+	/**
+	 * Retrieves an instance of the specified {@link ServiceDecoratorHandler} class.
+	 * If the handler does not exist in the internal cache, a new instance is created,
+	 * cached, and then returned.
+	 *
+	 * @param <T>          The type of the handler extending {@link ServiceDecoratorHandler}.
+	 * @param handlerClass The class of the handler to retrieve or create.
+	 * @return The existing handler instance if found, or a new instance if it does not already exist.
+	 * @throws RuntimeException if the specified class cannot be instantiated.
+	 */
+	public <T extends ServiceDecoratorHandler<?>> T getOrCreateHandler(final Class<T> handlerClass) {
+		final var handler = this.handlers.get(handlerClass);
+		if (handler != null) {
+			return handlerClass.cast(handler);
+		}
+
+		final var newInstance = createInstance(handlerClass);
+		this.handlers.put(handlerClass, newInstance);
+		return newInstance;
 	}
 
 	/**
