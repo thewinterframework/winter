@@ -53,6 +53,7 @@ repositories {
 dependencies {
     testImplementation(libs.junit.api)
     testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.getByName<Test>("test") {

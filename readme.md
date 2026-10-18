@@ -6,6 +6,10 @@
 inspired by [Spring Boot](https://github.com/spring-projects/spring-boot), it is designed to minimize boilerplate code,
 allowing developers to focus on building features rather than managing infrastructure.
 
+Winter Core uses Adventure 5.2.0 and targets Java 21. The Paper module targets Paper 26.2
+(`26.2.build.134-stable`) and requires Java 25. Build the project with the included Gradle 9.1.0 wrapper,
+with JDK 21 and JDK 25 available for the respective module toolchains.
+
 ---
 
 ## 🚀 Getting Started

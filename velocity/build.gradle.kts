@@ -21,6 +21,7 @@ dependencies {
     testImplementation(libs.junit.api)
     testImplementation(libs.adventure)
     testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {

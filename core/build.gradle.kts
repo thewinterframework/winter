@@ -30,6 +30,15 @@ dependencies {
 
     // Expression Language
     implementation(libs.commons.jexl3)
+
+    testImplementation(libs.junit.api)
+    testImplementation(libs.adventure)
+    testImplementation(libs.minimessage)
+    testImplementation(libs.kyori.text)
+    testImplementation(libs.kyori.legacy)
+    testImplementation("org.slf4j:slf4j-api:1.7.29")
+    testRuntimeOnly(libs.junit.engine)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -41,4 +50,9 @@ java {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    systemProperty("winter.test.classpath", sourceSets.test.get().runtimeClasspath.asPath)
 }

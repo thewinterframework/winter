@@ -1,7 +1,7 @@
 [versions]
 junit = "5.9.0"
 # paper
-paper = "1.21.4-R0.1-20250925.065901-231"
+paper = "26.2.build.134-stable"
 velocity = "3.4.0-SNAPSHOT"
 snakeyaml = "2.2"
 
@@ -15,7 +15,7 @@ gson = "2.10.1"
 configurate = "4.2.0-SNAPSHOT"
 
 # kyori
-kyori = "4.18.0"
+kyori = "5.2.0"
 
 # guice
 guice = "7.0.0"
