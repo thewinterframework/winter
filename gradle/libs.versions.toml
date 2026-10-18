@@ -2,6 +2,8 @@
 junit = "5.9.0"
 # paper
 paper = "1.21.4-R0.1-20250925.065901-231"
+velocity = "3.4.0-SNAPSHOT"
+snakeyaml = "2.2"
 
 # guava
 guava = "31.1-jre"
@@ -49,6 +51,8 @@ junit-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", ver
 
 # papermc
 paper = { group = "io.papermc.paper", name = "paper-api", version.ref = "paper" }
+velocity = { group = "com.velocitypowered", name = "velocity-api", version.ref = "velocity" }
+snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
 
 # guava
 guava = { group = "com.google.guava", name = "guava", version.ref = "guava" }

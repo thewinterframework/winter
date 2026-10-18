@@ -1,10 +1,12 @@
 package com.thewinterframework.module.processor;
 
+import com.google.auto.service.AutoService;
 import com.thewinterframework.module.PluginComponentModule;
 import com.thewinterframework.module.annotation.ModuleComponent;
 import com.thewinterframework.plugin.module.PluginModule;
 import com.thewinterframework.processor.clazz.ClassWireProcessor;
 import com.thewinterframework.processor.context.ProcessorContext;
+import com.thewinterframework.processor.handler.WinterAnnotationProcessor;
 import com.thewinterframework.utils.reflect.ProcessorUtils;
 
 import javax.lang.model.element.Element;
@@ -14,6 +16,7 @@ import java.lang.annotation.Annotation;
 /**
  * Annotation processor for {@link ModuleComponent}.
  */
+@AutoService(WinterAnnotationProcessor.class)
 public class ModuleComponentAnnotationProcessor extends ClassWireProcessor {
 
 	@Override

@@ -15,6 +15,6 @@ public class RequiresPluginCondition implements ComponentCondition {
 	@Override
 	public boolean matches(final ConditionContext context, final Annotation annotation) {
 		final var requires = (RequiresPlugin) annotation;
-		return context.getPlugin().getPlatformManager().isPluginEnabled(requires.value());
+		return context.getPlugin().getPlatformManager().isPluginPresent(requires.value());
 	}
 }

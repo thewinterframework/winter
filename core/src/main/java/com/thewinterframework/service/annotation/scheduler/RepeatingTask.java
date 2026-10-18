@@ -33,7 +33,7 @@ public @interface RepeatingTask {
 	 * The time unit of the interval
 	 * @return the time unit of the interval
 	 */
-	String unit() default "MILLISECONDS";
+	String unit() default "MILLIS";
 
 	/**
 	 * Whether the task should be executed asynchronously

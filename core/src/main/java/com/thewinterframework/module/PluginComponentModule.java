@@ -5,6 +5,8 @@ import com.google.inject.Scopes;
 import com.thewinterframework.module.annotation.ModuleComponent;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.module.PluginModule;
+import com.thewinterframework.plugin.module.Stage;
+import com.thewinterframework.wire.condition.context.ConditionContext;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
 
 import java.util.ArrayList;
@@ -27,7 +29,9 @@ public class PluginComponentModule extends AbstractProcessorModule {
 
 			final var depends = new ArrayList<Class<? extends PluginModule>>();
 			for (final var clazz : wire.getWiredClasses()) {
-				depends.add((Class<? extends PluginModule>) clazz);
+				if (evaluateConditions(clazz, Stage.LOAD, new ConditionContext(plugin, clazz), null)) {
+					depends.add((Class<? extends PluginModule>) clazz);
+				}
 			}
 			return depends;
 		} catch (final Exception e) {
