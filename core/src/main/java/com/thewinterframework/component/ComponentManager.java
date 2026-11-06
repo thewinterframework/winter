@@ -3,6 +3,7 @@ package com.thewinterframework.component;
 import com.google.inject.Binder;
 import com.thewinterframework.component.admission.ComponentDecision;
 import com.thewinterframework.component.context.ComponentContext;
+import com.thewinterframework.component.lifecycle.ComponentPhase;
 import com.thewinterframework.component.decorator.ComponentDecorator;
 import com.thewinterframework.component.decorator.ComponentDecoratorHandler;
 import com.thewinterframework.component.interceptor.ComponentInterceptor;
@@ -44,29 +45,78 @@ public class ComponentManager {
       final @NotNull ComponentContext context,
       final @NotNull Collection<? extends ComponentInterceptor> interceptors
   ) throws Exception {
+    return registerComponent(context, interceptors, ComponentPhase.LOAD);
+  }
+
+  public boolean registerComponent(
+      final @NotNull ComponentContext context,
+      final @NotNull Collection<? extends ComponentInterceptor> interceptors,
+      final ComponentPhase... phases
+  ) throws Exception {
+    for (final var phase : phases) {
+      if (!admitInterceptors(context, interceptors, phase)) {
+        return false;
+      }
+    }
+    final var candidates = decoratorCandidates(context.componentType());
+    for (final var phase : phases) {
+      if (!admitDecorators(context, candidates.values(), phase)) {
+        return false;
+      }
+    }
+    decorators.putAll(candidates);
+    discoverDecorators(context.descriptor());
+    return true;
+  }
+
+  public boolean admits(
+      final ComponentContext context,
+      final Collection<? extends ComponentInterceptor> interceptors,
+      final ComponentPhase phase
+  ) throws Exception {
+    if (!admitInterceptors(context, interceptors, phase)) {
+      return false;
+    }
+    return admitDecorators(context, decoratorCandidates(context.componentType()).values(), phase);
+  }
+
+  private boolean admitInterceptors(
+      final ComponentContext context,
+      final Collection<? extends ComponentInterceptor> interceptors,
+      final ComponentPhase phase
+  ) throws Exception {
     final var orderedInterceptors = interceptors.stream()
         .sorted(Comparator.comparingInt(ComponentInterceptor::order)
             .thenComparing(interceptor -> interceptor.getClass().getName()))
         .toList();
     for (final var interceptor : orderedInterceptors) {
-      if (interceptor.decide(context) == ComponentDecision.DISCARD) {
+      if (interceptor.decide(phase, context) == ComponentDecision.DISCARD) {
         return false;
       }
     }
 
-    final var candidates = decoratorCandidates(context.componentType());
-    final var orderedDecorators = candidates.values().stream()
+    return true;
+  }
+
+  private boolean admitDecorators(
+      final ComponentContext context,
+      final Collection<? extends ComponentDecoratorHandler<?>> candidates,
+      final ComponentPhase phase
+  ) throws Exception {
+    final var orderedDecorators = candidates.stream()
         .sorted(Comparator.comparing(handler -> handler.getClass().getName()))
         .toList();
     for (final var decorator : orderedDecorators) {
-      if (decorator.decide(context) == ComponentDecision.DISCARD) {
+      if (decorator.decide(phase, context) == ComponentDecision.DISCARD) {
         return false;
       }
     }
 
-    decorators.putAll(candidates);
-    discoverDecorators(context.descriptor());
     return true;
+  }
+
+  public void injectDecorators(final WinterPlugin plugin) {
+    decorators.values().forEach(plugin.getInjector()::injectMembers);
   }
 
   /**

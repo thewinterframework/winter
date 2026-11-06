@@ -3,6 +3,7 @@ package com.thewinterframework.component.decorator;
 import com.google.inject.Binder;
 import com.thewinterframework.component.admission.ComponentDecision;
 import com.thewinterframework.component.context.ComponentContext;
+import com.thewinterframework.component.lifecycle.ComponentPhase;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 
@@ -22,6 +23,11 @@ public interface ComponentDecoratorHandler<A extends Annotation> {
    */
   default ComponentDecision decide(final ComponentContext context) throws Exception {
     return ComponentDecision.CONTINUE;
+  }
+
+  /** Decides admission at a specific lifecycle boundary. */
+  default ComponentDecision decide(final ComponentPhase phase, final ComponentContext context) throws Exception {
+    return phase == ComponentPhase.LOAD ? decide(context) : ComponentDecision.CONTINUE;
   }
 
   default void onDiscover(final Class<?> component, final AnnotatedMethodHandle<A> method) {

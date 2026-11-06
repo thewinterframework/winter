@@ -23,6 +23,7 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 public class ExposeAnnotationProcessor implements WinterAnnotationProcessor {
 
   public static final Pattern ELEMENT_PATTERN = Pattern.compile("(?:<el>)([\\s\\S]*?)(?:<\\/el>)");
+  private boolean generated;
 
   @Override
   public Set<Class<? extends Annotation>> getSupportedAnnotations() {
@@ -31,7 +32,7 @@ public class ExposeAnnotationProcessor implements WinterAnnotationProcessor {
 
   @Override
   public void onRoundStart(final ProcessorContext ctx) {
-    if (!ctx.getRoundEnv().processingOver()) {
+    if (generated || ctx.getRoundEnv().processingOver()) {
       return;
     }
 
@@ -54,6 +55,7 @@ public class ExposeAnnotationProcessor implements WinterAnnotationProcessor {
         .placeholder("PACKAGE", pkg)
         .placeholder("PLUGIN", pluginName)
         .write(ctx, pkg + ".ExposeAPIModule");
+    generated = true;
   }
 
   private List<ExposedMethod> exposedMethods(final TypeElement apiElement, final ProcessorContext ctx) {

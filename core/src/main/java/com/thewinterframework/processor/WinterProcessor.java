@@ -5,6 +5,7 @@ import com.thewinterframework.plugin.WinterBootPlugin;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.processor.context.ProcessorContext;
 import com.thewinterframework.processor.component.ComponentMetadataProcessor;
+import com.thewinterframework.processor.config.WinterProperties;
 import com.thewinterframework.processor.handler.WinterAnnotationProcessor;
 import com.thewinterframework.processor.extension.WinterProcessorExtension;
 import com.thewinterframework.processor.template.TemplateBuilder;
@@ -17,6 +18,8 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
+import javax.tools.StandardLocation;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -134,11 +137,24 @@ public class WinterProcessor extends AbstractProcessor {
     if (roundEnv.processingOver()) {
       handlers.forEach(h -> h.onProcessingFinished(ctx));
       componentProcessor.finishPlugin(ctx);
+      writeDebugMarker(ctx);
       wiredClasses.addAll(ctx.getRequiredModulesAsClasses());
       generateModules(ctx);
     }
 
     return false;
+  }
+
+  private void writeDebugMarker(final ProcessorContext context) {
+    if (!WinterProperties.load(processingEnv).enabled("winter.debug", "winter.debug", false)) {
+      return;
+    }
+    final var name = "META-INF/winter/debug/" + ((TypeElement) pluginClass).getQualifiedName();
+    try {
+      processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", name).openWriter().close();
+    } catch (final IOException exception) {
+      context.messager().printError("Cannot write Winter debug marker: " + exception.getMessage());
+    }
   }
 
   void generateModules(final ProcessorContext ctx) {

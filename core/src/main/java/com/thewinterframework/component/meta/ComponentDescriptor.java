@@ -2,6 +2,11 @@ package com.thewinterframework.component.meta;
 
 import com.thewinterframework.component.annotation.Component;
 import com.thewinterframework.component.annotation.ComponentScope;
+import com.thewinterframework.component.annotation.ComponentPriority;
+import com.thewinterframework.component.annotation.External;
+import com.thewinterframework.component.annotation.LoadAfter;
+import com.thewinterframework.component.annotation.LoadBefore;
+import com.thewinterframework.component.annotation.SyncLoading;
 import com.thewinterframework.component.handler.ComponentHandler;
 import com.thewinterframework.component.interceptor.ComponentInterceptor;
 
@@ -9,6 +14,7 @@ import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 /** Immutable runtime metadata for a component. */
 public record ComponentDescriptor(
@@ -32,38 +38,59 @@ public record ComponentDescriptor(
   }
 
   public static ComponentDescriptor from(final Class<?> type) {
-    final var component = findComponent(type);
-    if (component == null) {
+    if (!isComponent(type)) {
       throw new IllegalArgumentException(type.getName() + " is not annotated with @Component");
     }
 
+    final var priority = findMetadata(type, ComponentPriority.class);
+    final var loadAfter = findMetadata(type, LoadAfter.class);
+    final var loadBefore = findMetadata(type, LoadBefore.class);
     return new ComponentDescriptor(
         type,
-        component.scope(),
-        component.order(),
-        List.of(component.after()),
-        List.of(component.before()),
-        component.async(),
-        List.of(component.handlers()),
-        List.of(component.interceptors())
+        hasMetadata(type, External.class) ? ComponentScope.EXTERNAL : ComponentScope.LOCAL,
+        priority == null ? 0 : priority.value(),
+        loadAfter == null ? List.of() : List.of(loadAfter.value()),
+        loadBefore == null ? List.of() : List.of(loadBefore.value()),
+        !hasMetadata(type, SyncLoading.class) && !SyncLoadingIndex.contains(type),
+        metadataTypes(type, com.thewinterframework.component.annotation.HandledBy.class)
+            .map(com.thewinterframework.component.annotation.HandledBy::value).toList(),
+        metadataTypes(type, com.thewinterframework.component.annotation.InterceptedBy.class)
+            .map(com.thewinterframework.component.annotation.InterceptedBy::value).toList()
     );
   }
 
   public static boolean isComponent(final Class<?> type) {
-    return findComponent(type) != null;
+    return type.isAnnotationPresent(Component.class) || stereotypeTypes(type).findAny().isPresent();
   }
 
-  private static Component findComponent(final Class<?> type) {
-    final var direct = type.getDeclaredAnnotation(Component.class);
+  private static <A extends Annotation> A findMetadata(final Class<?> type, final Class<A> annotationType) {
+    final var direct = type.getDeclaredAnnotation(annotationType);
     if (direct != null) {
       return direct;
     }
-
-    return Arrays.stream(type.getDeclaredAnnotations())
-        .map(Annotation::annotationType)
-        .map(annotationType -> annotationType.getDeclaredAnnotation(Component.class))
-        .filter(component -> component != null)
+    return stereotypeTypes(type)
+        .map(stereotype -> stereotype.getDeclaredAnnotation(annotationType))
+        .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
+  }
+
+  private static boolean hasMetadata(final Class<?> type, final Class<? extends Annotation> annotationType) {
+    return type.isAnnotationPresent(annotationType)
+        || stereotypeTypes(type).anyMatch(stereotype -> stereotype.isAnnotationPresent(annotationType));
+  }
+
+  private static <A extends Annotation> Stream<A> metadataTypes(final Class<?> type, final Class<A> annotationType) {
+    return Stream.concat(
+        Arrays.stream(type.getDeclaredAnnotationsByType(annotationType)),
+        stereotypeTypes(type).flatMap(stereotype -> Arrays.stream(stereotype.getDeclaredAnnotationsByType(annotationType)))
+    ).distinct();
+  }
+
+  private static Stream<Class<? extends Annotation>> stereotypeTypes(final Class<?> type) {
+    return Arrays.stream(type.getDeclaredAnnotations())
+        .map(Annotation::annotationType)
+        .filter(annotationType -> annotationType.isAnnotationPresent(Component.class))
+        .sorted(java.util.Comparator.comparing(Class::getName));
   }
 }

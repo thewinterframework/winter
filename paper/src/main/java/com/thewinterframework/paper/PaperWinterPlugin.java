@@ -11,6 +11,9 @@ import com.thewinterframework.paper.platform.PaperPlatform;
 import com.thewinterframework.paper.scheduler.PaperPluginScheduler;
 import com.thewinterframework.plugin.DataFolder;
 import com.thewinterframework.plugin.WinterPlugin;
+import com.thewinterframework.plugin.WinterDiagnostics;
+import com.thewinterframework.plugin.lifecycle.PluginLifecycle;
+import com.thewinterframework.plugin.lifecycle.PluginPhase;
 import com.thewinterframework.plugin.module.PluginModuleManager;
 import com.thewinterframework.plugin.platform.PlatformPluginManager;
 import com.thewinterframework.scheduler.PluginScheduler;
@@ -33,6 +36,7 @@ import java.util.Objects;
 public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlugin {
 
   protected final PluginModuleManager moduleManager = new PluginModuleManager(this);
+  private final PluginLifecycle lifecycle = new PluginLifecycle(this);
   protected final PluginScheduler scheduler = new PaperPluginScheduler(this);
   protected final PlatformPluginManager platformPluginManager = new PaperPlatform();
 
@@ -45,15 +49,14 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
   public final void onLoad() {
     final var startTime = System.currentTimeMillis();
     try {
-      modulesLoaded = moduleManager.scanModules() && moduleManager.loadModules();
-      if (!modulesLoaded) {
-        moduleManager.disableModules();
-        Bukkit.getPluginManager().disablePlugin(this);
-        return;
-      }
-      onPluginLoad();
-      getSLF4JLogger().info("Plugin loaded in {}ms", System.currentTimeMillis() - startTime);
-    } catch (final RuntimeException exception) {
+      lifecycle.run(PluginPhase.SCAN, () -> requireSuccess(moduleManager.scanModules(), "scan"));
+      lifecycle.run(PluginPhase.LOAD, () -> {
+        requireSuccess(moduleManager.loadModules(), "load");
+        modulesLoaded = true;
+        onPluginLoad();
+      });
+      WinterDiagnostics.log(this, "Plugin loaded in {}ms", System.currentTimeMillis() - startTime);
+    } catch (final Exception exception) {
       getSLF4JLogger().error("Plugin load failed", exception);
       modulesLoaded = false;
       moduleManager.disableModules();
@@ -70,15 +73,17 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
       return;
     }
     try {
-      final var injector = createInjector();
-      injector.injectMembers(this);
-      if (!moduleManager.injectModules() || !moduleManager.enableModules()) {
-        Bukkit.getPluginManager().disablePlugin(this);
-        return;
-      }
-      onPluginEnable();
-      getSLF4JLogger().info("Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
-    } catch (final RuntimeException exception) {
+      lifecycle.run(PluginPhase.INJECTION, () -> {
+        final var injector = createInjector();
+        injector.injectMembers(this);
+        requireSuccess(moduleManager.injectModules(), "inject");
+      });
+      lifecycle.run(PluginPhase.ENABLE, () -> {
+        requireSuccess(moduleManager.enableModules(), "enable");
+        onPluginEnable();
+      });
+      WinterDiagnostics.log(this, "Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
+    } catch (final Exception exception) {
       getSLF4JLogger().error("Plugin enable failed", exception);
       Bukkit.getPluginManager().disablePlugin(this);
     }
@@ -92,17 +97,27 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
   public final void onDisable() {
     final var startTime = System.currentTimeMillis();
     try {
-      if (!moduleManager.disableModules()) {
-        getSLF4JLogger().error("One or more modules failed to disable");
-      }
-      if (modulesLoaded && injector != null) {
-        onPluginDisable();
-      }
+      lifecycle.run(PluginPhase.DISABLE, () -> {
+        if (!moduleManager.disableModules()) {
+          getSLF4JLogger().error("One or more modules failed to disable");
+        }
+        if (modulesLoaded && injector != null) {
+          onPluginDisable();
+        }
+      });
+    } catch (final Exception exception) {
+      getSLF4JLogger().error("Plugin disable failed", exception);
     } finally {
       scheduler.cancelAllTasks();
     }
 
-    getSLF4JLogger().info("Plugin disabled in {}ms", System.currentTimeMillis() - startTime);
+    WinterDiagnostics.log(this, "Plugin disabled in {}ms", System.currentTimeMillis() - startTime);
+  }
+
+  private void requireSuccess(final boolean successful, final String action) {
+    if (!successful) {
+      throw new IllegalStateException("Failed to " + action + " Winter modules");
+    }
   }
 
   @Override

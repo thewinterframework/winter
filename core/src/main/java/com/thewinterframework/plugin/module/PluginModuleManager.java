@@ -2,7 +2,10 @@ package com.thewinterframework.plugin.module;
 
 import com.google.inject.Module;
 import com.thewinterframework.component.meta.ComponentDescriptor;
+import com.thewinterframework.component.annotation.SyncLoading;
+import com.thewinterframework.component.meta.SyncLoadingIndex;
 import com.thewinterframework.plugin.WinterPlugin;
+import com.thewinterframework.plugin.WinterDiagnostics;
 import com.thewinterframework.processor.WinterProcessor;
 import com.thewinterframework.utils.graph.DfsGraph;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +63,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
           return false;
         }
       }
-      logger.info("Scanned {} modules", providers.size());
+      WinterDiagnostics.log(plugin, "Scanned {} modules", providers.size());
       return true;
     } catch (final Exception exception) {
       logger.error("Failed to scan modules", exception);
@@ -159,7 +162,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
     for (final var moduleType : orderedModules()) {
       plugin.getInjector().injectMembers(registeredModules.get(moduleType));
     }
-    logger.info("Injected modules in {}ms", System.currentTimeMillis() - start);
+    WinterDiagnostics.log(plugin, "Injected modules in {}ms", System.currentTimeMillis() - start);
     return true;
   }
 
@@ -219,7 +222,10 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
   }
 
   private boolean isAsync(final Class<? extends PluginModule> type) {
-    return ComponentDescriptor.isComponent(type) && ComponentDescriptor.from(type).async();
+    if (type.isAnnotationPresent(SyncLoading.class) || SyncLoadingIndex.contains(type)) {
+      return false;
+    }
+    return !ComponentDescriptor.isComponent(type) || ComponentDescriptor.from(type).async();
   }
 
   private boolean runModules(
@@ -239,7 +245,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
           successful = false;
         }
       }
-      logger.info("{} modules in {}ms", phase.pastTense, System.currentTimeMillis() - start);
+      WinterDiagnostics.log(plugin, "{} modules in {}ms", phase.pastTense, System.currentTimeMillis() - start);
       return successful;
     }
     final var completion = new HashMap<Class<? extends PluginModule>, CompletableFuture<Boolean>>();
@@ -269,7 +275,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
       final var successful = CompletableFuture.allOf(completion.values().toArray(CompletableFuture[]::new))
           .thenApply(unused -> completion.values().stream().allMatch(CompletableFuture::join))
           .join();
-      logger.info("{} modules in {}ms", phase.pastTense, System.currentTimeMillis() - start);
+      WinterDiagnostics.log(plugin, "{} modules in {}ms", phase.pastTense, System.currentTimeMillis() - start);
       return successful;
     } catch (final CompletionException exception) {
       logger.error("Failed to {} modules", phase.action, exception.getCause());
@@ -302,7 +308,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
         if (phase == ModulePhase.LOAD) {
           loadedModules.add(moduleType);
         }
-        logger.info("Module '{}' {}", moduleType.getSimpleName(), phase.pastTense);
+        WinterDiagnostics.log(plugin, "Module '{}' {}", moduleType.getSimpleName(), phase.pastTense);
       } else {
         logger.error("Module '{}' failed to {}", moduleType.getSimpleName(), phase.action);
       }

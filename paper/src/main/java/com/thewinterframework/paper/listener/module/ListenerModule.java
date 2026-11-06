@@ -2,6 +2,7 @@ package com.thewinterframework.paper.listener.module;
 
 import com.google.inject.Binder;
 import com.thewinterframework.paper.listener.ListenerComponent;
+import com.thewinterframework.component.annotation.SyncLoading;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
 import org.bukkit.Bukkit;
@@ -12,6 +13,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 /**
  * A module that handles listener components.
  */
+@SyncLoading
 public class ListenerModule extends AbstractProcessorModule {
 
   public ListenerModule() {

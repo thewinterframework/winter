@@ -18,6 +18,11 @@ public interface ComponentInterceptor {
     return ComponentDecision.CONTINUE;
   }
 
+  /** Decides admission at a specific lifecycle boundary. */
+  default ComponentDecision decide(final ComponentPhase phase, final ComponentContext context) throws Exception {
+    return phase == ComponentPhase.LOAD ? decide(context) : ComponentDecision.CONTINUE;
+  }
+
   default int order() {
     return 0;
   }

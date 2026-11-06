@@ -3,7 +3,9 @@ package com.thewinterframework.service;
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
 import com.thewinterframework.component.ComponentManager;
+import com.thewinterframework.component.annotation.SyncLoading;
 import com.thewinterframework.plugin.WinterPlugin;
+import com.thewinterframework.plugin.WinterDiagnostics;
 import com.thewinterframework.service.annotation.Service;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
 
@@ -11,6 +13,7 @@ import com.thewinterframework.wire.module.AbstractProcessorModule;
  * Module for services.
  * <p> This module scans for classes annotated with {@link Service} and binds them to the injector. </p>
  */
+@SyncLoading
 public class ServiceModule extends AbstractProcessorModule {
 
   private final ServiceManager serviceManager = new ServiceManager();
@@ -52,7 +55,7 @@ public class ServiceModule extends AbstractProcessorModule {
         return false;
       }
       serviceManager.startHandlers(plugin);
-      plugin.getSLF4JLogger().info("Enabled {} services in {}ms", serviceManager.services().size(), System.currentTimeMillis() - start);
+      WinterDiagnostics.log(plugin, "Enabled {} services in {}ms", serviceManager.services().size(), System.currentTimeMillis() - start);
       return true;
     } catch (final Exception e) {
       plugin.getSLF4JLogger().error("Failed to enable services", e);
@@ -68,7 +71,7 @@ public class ServiceModule extends AbstractProcessorModule {
         return false;
       }
       serviceManager.stopHandlers(plugin);
-      plugin.getSLF4JLogger().info("Disabled {} services in {}ms", serviceManager.services().size(), System.currentTimeMillis() - start);
+      WinterDiagnostics.log(plugin, "Disabled {} services in {}ms", serviceManager.services().size(), System.currentTimeMillis() - start);
       return true;
     } catch (final Exception e) {
       plugin.getSLF4JLogger().error("Failed to disable services", e);

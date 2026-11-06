@@ -2,10 +2,12 @@ package com.thewinterframework.component;
 
 import com.thewinterframework.component.admission.ComponentDecision;
 import com.thewinterframework.component.annotation.Component;
+import com.thewinterframework.component.annotation.InterceptedBy;
 import com.thewinterframework.component.context.ComponentContext;
 import com.thewinterframework.component.decorator.ComponentDecorator;
 import com.thewinterframework.component.decorator.ComponentDecoratorHandler;
 import com.thewinterframework.component.interceptor.ComponentInterceptor;
+import com.thewinterframework.component.lifecycle.ComponentPhase;
 import com.thewinterframework.component.meta.ComponentDescriptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,6 +61,31 @@ class ComponentAdmissionTest {
     assertNull(manager.getDecorator(RejectingDecorator.class));
   }
 
+  @Test
+  void interceptorCanDiscardBeforeInjectionOrEnable() throws Exception {
+    final var descriptor = ComponentDescriptor.from(InterceptedComponent.class);
+    final var context = new ComponentContext(null, descriptor);
+    final var manager = new ComponentManager();
+    final ComponentInterceptor rejectInjection = new ComponentInterceptor() {
+      @Override
+      public ComponentDecision decide(final ComponentPhase phase, final ComponentContext ignored) {
+        return phase == ComponentPhase.INJECTION ? ComponentDecision.DISCARD : ComponentDecision.CONTINUE;
+      }
+    };
+    assertFalse(manager.registerComponent(context, List.of(rejectInjection),
+        ComponentPhase.LOAD, ComponentPhase.INJECTION));
+    assertNull(manager.getDecorator(RejectingDecorator.class));
+    assertEquals(0, RejectingDecorator.constructions);
+
+    final ComponentInterceptor rejectEnable = new ComponentInterceptor() {
+      @Override
+      public ComponentDecision decide(final ComponentPhase phase, final ComponentContext ignored) {
+        return phase == ComponentPhase.ENABLE ? ComponentDecision.DISCARD : ComponentDecision.CONTINUE;
+      }
+    };
+    assertFalse(manager.admits(context, List.of(rejectEnable), ComponentPhase.ENABLE));
+  }
+
   private static final class RejectingInterceptor implements ComponentInterceptor {
 
     @Override
@@ -98,7 +125,8 @@ class ComponentAdmissionTest {
     }
   }
 
-  @Component(interceptors = RejectingInterceptor.class)
+  @Component
+  @InterceptedBy(RejectingInterceptor.class)
   @Rejected
   private static final class InterceptedComponent {
   }

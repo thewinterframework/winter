@@ -1,6 +1,8 @@
 package com.thewinterframework.plugin.module;
 
 import com.thewinterframework.component.annotation.Component;
+import com.thewinterframework.component.annotation.ComponentPriority;
+import com.thewinterframework.component.annotation.SyncLoading;
 import com.thewinterframework.plugin.WinterPlugin;
 import org.junit.jupiter.api.Test;
 import org.slf4j.helpers.NOPLogger;
@@ -12,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PluginModuleManagerTest {
@@ -19,6 +22,7 @@ class PluginModuleManagerTest {
   @Test
   void synchronousModuleWaitsForEarlierAsynchronousLoad() {
     final var manager = new PluginModuleManager(plugin());
+    final var lifecycleThread = Thread.currentThread();
     SlowModule.loaded = false;
     assertTrue(manager.registerModule(SlowModule.class));
     assertTrue(manager.registerModule(BarrierModule.class));
@@ -26,9 +30,21 @@ class PluginModuleManagerTest {
         .map(Object::getClass).toList());
 
     assertTrue(manager.loadModules());
+    assertSame(lifecycleThread, BarrierModule.loadThread);
     assertFalse(manager.loadModules());
     assertTrue(manager.disableModules());
     assertFalse(manager.enableModules());
+  }
+
+  @Test
+  void modulesWithoutAnnotationsLoadOnAWorkerByDefault() {
+    final var manager = new PluginModuleManager(plugin());
+    final var lifecycleThread = Thread.currentThread();
+    assertTrue(manager.registerModule(DefaultAsyncModule.class));
+
+    assertTrue(manager.loadModules());
+    assertFalse(DefaultAsyncModule.loadThread == lifecycleThread);
+    assertTrue(manager.disableModules());
   }
 
   @Test
@@ -64,7 +80,8 @@ class PluginModuleManagerTest {
     );
   }
 
-  @Component(async = true, order = -100)
+  @Component
+  @ComponentPriority(-100)
   public static final class SlowModule implements PluginModule {
     private static volatile boolean loaded;
 
@@ -76,15 +93,31 @@ class PluginModuleManagerTest {
     }
   }
 
-  @Component(order = 100)
+  @Component
+  @SyncLoading
+  @ComponentPriority(100)
   public static final class BarrierModule implements PluginModule {
+    private static volatile Thread loadThread;
+
     @Override
     public boolean onLoad(final WinterPlugin plugin) {
+      loadThread = Thread.currentThread();
       return SlowModule.loaded;
     }
   }
 
-  @Component(order = -100)
+  public static final class DefaultAsyncModule implements PluginModule {
+    private static volatile Thread loadThread;
+
+    @Override
+    public boolean onLoad(final WinterPlugin plugin) {
+      loadThread = Thread.currentThread();
+      return true;
+    }
+  }
+
+  @Component
+  @ComponentPriority(-100)
   public static final class LoadedModule implements PluginModule {
     private static final AtomicInteger disables = new AtomicInteger();
 
@@ -95,7 +128,8 @@ class PluginModuleManagerTest {
     }
   }
 
-  @Component(order = 100)
+  @Component
+  @ComponentPriority(100)
   public static final class FailingModule implements PluginModule {
     @Override
     public boolean onLoad(final WinterPlugin plugin) {
@@ -103,7 +137,8 @@ class PluginModuleManagerTest {
     }
   }
 
-  @Component(order = -100)
+  @Component
+  @ComponentPriority(-100)
   public static final class TailModule implements PluginModule {
     private static final AtomicInteger disables = new AtomicInteger();
 
@@ -114,7 +149,8 @@ class PluginModuleManagerTest {
     }
   }
 
-  @Component(order = 100)
+  @Component
+  @ComponentPriority(100)
   public static final class FailingDisableModule implements PluginModule {
     @Override
     public boolean onDisable(final WinterPlugin plugin) {

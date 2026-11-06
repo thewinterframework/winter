@@ -3,6 +3,7 @@ package com.thewinterframework.service.processor;
 import com.google.auto.service.AutoService;
 import com.thewinterframework.plugin.WinterBootPlugin;
 import com.thewinterframework.processor.WinterProcessor;
+import com.thewinterframework.processor.config.WinterProperties;
 import com.thewinterframework.processor.context.ProcessorContext;
 import com.thewinterframework.processor.template.TemplateBuilder;
 import com.thewinterframework.service.annotation.expose.Expose;
@@ -82,11 +83,11 @@ public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
       return false;
     }
 
-    return true;
+    return false;
   }
 
   private boolean isAPIBypassed() {
-    return Boolean.parseBoolean(getOption("bypass.api", "false"));
+    return WinterProperties.load(processingEnv).enabled("winter.expose.bypass-api", "bypass.api", false);
   }
 
   private String getPluginPkg(final RoundEnvironment roundEnv) {
@@ -98,7 +99,7 @@ public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
       return processingEnv.getElementUtils().getPackageOf(pluginClass).getQualifiedName().toString();
     }
 
-    return getOption("plugin.package", "com.default.api");
+    return getOption("winter.plugin.package", "plugin.package", "com.example.api");
   }
 
   private String getPluginName(final RoundEnvironment roundEnv) {
@@ -106,11 +107,11 @@ public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
       return WinterProcessor.getPluginClass(roundEnv, processingEnv).getSimpleName().toString();
     }
 
-    return getOption("plugin.name", "Default");
+    return getOption("winter.plugin.name", "plugin.name", "Default");
   }
 
-  private String getOption(final String key, final String defaultValue) {
-    return processingEnv.getOptions().getOrDefault(key, defaultValue);
+  private String getOption(final String key, final String legacyKey, final String defaultValue) {
+    return WinterProperties.load(processingEnv).get(key, legacyKey, defaultValue);
   }
 
   @SuppressWarnings("DuplicatedCode")

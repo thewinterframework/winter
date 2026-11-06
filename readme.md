@@ -1,42 +1,35 @@
-[![Core Current](https://img.shields.io/maven-central/v/com.thewinterframework/core)](https://central.sonatype.com/artifact/com.thewinterframework/core)
-
 # The Winter Framework 3.0
 
-Winter is a dependency-injection-first framework for Minecraft plugins. Version 3.0 replaces the separate service,
-listener, provider, command, and module discovery paths with one extensible component model.
+Winter provides compile-time discovery, Guice injection, and a managed lifecycle for Java 21 Paper plugins. Its component model supports library and multi-module projects.
 
-## 3.0 highlights
+## Setup
 
-- One `@Component` annotation for services, listeners, command objects, providers, modules, and addon-defined roles.
-- Composed component annotations for domain-specific APIs without creating another discovery pipeline.
-- External component indexes that let a library install components in a consuming plugin.
-- Deterministic ordering for every component and module through `order`, `before`, and `after`.
-- Explicit asynchronous lifecycle loading for independent components and modules.
-- `ComponentHandler`, `ComponentInterceptor`, and `ComponentDecoratorHandler` extension points.
-- A service-loader based processor API that uses annotation names instead of eagerly loading optional addon types.
-- Existing decorators now work on every component. A single `@ScheduledAt` declaration is discovered correctly.
-
-The legacy `@Service`, `@ListenerComponent`, `@ProviderComponent`, and `@ModuleComponent` annotations remain as
-deprecated compatibility stereotypes. New code should use `@Component`.
-
-## Requirements
-
-- Java 21
-- A platform module such as `paper`
-- The same Winter version on the compile classpath and annotation processor path
+Use the same Winter version for compilation and annotation processing:
 
 ```kotlin
 dependencies {
-    api("com.thewinterframework:paper:3.0.0")
-    annotationProcessor("com.thewinterframework:paper:3.0.0")
+  api("com.thewinterframework:paper:3.0.0")
+  annotationProcessor("com.thewinterframework:paper:3.0.0")
 }
 
-tasks.withType<JavaCompile> {
-    options.compilerArgs.add("-parameters")
+tasks.processResources {
+  exclude("winter.properties")
 }
 ```
 
-## Bootstrapping a Paper plugin
+Winter's annotation processors read `src/main/resources/winter.properties` during compilation. The Gradle exclusion keeps this project-specific file out of the runtime artifact. Available keys:
+
+```properties
+winter.project.type=IMPL
+winter.plugin.package=com.example.api
+winter.plugin.name=ExamplePlugin
+winter.expose.bypass-api=false
+winter.debug=false
+```
+
+Use `winter.project.type=API` in an API-only module and `IMPL` otherwise. In an API-only module, set `winter.plugin.package` and `winter.plugin.name` to name the generated interface. In a single-module plugin, `winter.expose.bypass-api=true` derives that name and package from its `@WinterBootPlugin` class. `winter.debug=true` generates a marker that makes routine Winter messages visible at INFO; otherwise they use DEBUG. Errors remain visible. Each Gradle module reads its own file.
+
+Legacy compiler options remain supported for migration. `-parameters` is a Java compiler flag, not a Winter option; keep it when a command framework relies on Java parameter names.
 
 ```java
 @WinterBootPlugin
@@ -44,293 +37,82 @@ public final class ExamplePlugin extends PaperWinterPlugin {
 }
 ```
 
-Point `plugin.yml` at this class. `PaperWinterPlugin` owns the platform lifecycle and initializes generated Winter
-metadata before creating the Guice injector.
+Point `plugin.yml` at the boot class. Winter generates module and component indexes at compile time.
 
-## Unified components
+## Components
 
-Any class can be a managed singleton:
-
-```java
-@Component
-public final class ProfileService {
-    private final ProfileRepository repository;
-
-    @Inject
-    public ProfileService(final ProfileRepository repository) {
-        this.repository = repository;
-    }
-}
-```
-
-Platform handlers infer extra capabilities. A Paper listener needs no listener-specific component annotation:
+`@Component` is a marker. Put metadata in separate annotations:
 
 ```java
 @Component
-public final class JoinListener implements Listener {
-    @EventHandler
-    public void onJoin(final PlayerJoinEvent event) {
-        // Handle the event.
-    }
-}
-```
-
-Conditions and existing lifecycle decorators apply to the same component:
-
-```java
-@Component
-@RequiresPlugin("Vault")
-public final class EconomyBridge {
-    @OnEnable
-    void connect() {
-    }
-
-    @OnDisable
-    void disconnect() {
-    }
-}
-```
-
-## Ordering and asynchronous loading
-
-Lower numeric orders run first. Explicit dependency edges take precedence over numeric order.
-
-```java
-@Component(order = -100)
+@ComponentPriority(-100)
 public final class ConfigurationComponent {
 }
 
-@Component(after = ConfigurationComponent.class)
+@Component
+@LoadAfter(ConfigurationComponent.class)
 public final class RepositoryComponent {
+  @Inject
+  public RepositoryComponent(final ConfigurationComponent configuration) {
+  }
 }
 ```
 
-Independent opt-in components can perform lifecycle work on Java 21 virtual threads:
+`@LoadBefore` adds the reverse ordering edge. Components and independent plugin modules run on Java 21 virtual threads by default. `@SyncLoading` runs a component or module on the lifecycle thread and waits for earlier work:
 
 ```java
-@Component(async = true, after = ConfigurationComponent.class)
-public final class RemoteCatalogComponent {
-    @OnEnable
-    void loadCatalog() {
-        // Network or storage work only. Do not access unsafe Bukkit state here.
-    }
+@Component
+@SyncLoading
+public final class MainThreadComponent {
 }
 ```
 
-Winter waits for asynchronous work before advancing the plugin lifecycle. A synchronous component creates a barrier
-for asynchronous components scheduled before it. Cycles are rejected with a descriptive startup error.
+The processor also marks components synchronous when their source directly references Bukkit or Paper types, or implements Bukkit's `Listener`. This scan cannot prove a transitive call is thread-safe. Mark components that reach Bukkit indirectly with `@SyncLoading`.
 
-Modules use the same metadata:
+Conditions and lifecycle decorators work on components. A Paper `Listener` annotated with `@Component` is handled by the Paper module. The old `@Service`, `@ListenerComponent`, `@ProviderComponent`, and `@ModuleComponent` annotations remain as deprecated stereotypes.
+
+## API and external dependencies
+
+An API module may declare an exposed contract:
 
 ```java
-@Component(async = true, order = 50)
-public final class MetricsModule implements PluginModule {
-    @Override
-    public boolean onLoad(final WinterPlugin plugin) {
-        return true;
-    }
+@Expose
+public interface ProfileRepository {
+  Profile find(UUID playerId);
 }
 ```
 
-Asynchronous loading is never implicit. Enable it only for code that is safe away from the Paper server thread.
-
-## External components
-
-An addon can export a component to every consuming Winter plugin:
+Its `winter.properties` should set `winter.project.type=API`, `winter.plugin.package`, and `winter.plugin.name`. The implementation module compiles against that API and exports a component:
 
 ```java
-@Component(scope = ComponentScope.EXTERNAL)
-public final class SharedIntegration {
+@External
+public final class MongoProfileRepository implements ProfileRepository {
+  // Implement the contract.
 }
 ```
 
-The producer's Winter annotation processor writes `META-INF/winter/components.index`. The consumer installs entries
-from that index when the producer is present on both its compile and annotation processor paths:
+Winter writes `META-INF/winter/components.index` with the external component and its exposed interface binding. The consuming plugin discovers the index at compile time, wires `ExternalBindingsModule` automatically, and Guice can inject `ProfileRepository`. The generated `ExposeAPIModule` also binds the generated plugin API interface to its default implementation. Producer artifacts must be on the consumer's compile and annotation processor paths, and the implementation must be available to the consumer class loader at runtime. Conflicting exports of one contract fail with an error.
 
 ```kotlin
 dependencies {
-    compileOnlyApi("com.example:shared-integration:1.0.0")
-    annotationProcessor("com.example:shared-integration:1.0.0")
-
-    api("com.thewinterframework:paper:3.0.0")
-    annotationProcessor("com.thewinterframework:paper:3.0.0")
+  implementation(project(":api"))
+  implementation(project(":implementation"))
+  annotationProcessor(project(":implementation"))
 }
 ```
 
-The exported classes must also be available to the plugin class loader at runtime. This is normally provided by the
-server plugin dependency or by packaging the addon in the consumer.
+`@External` is a component stereotype and may be composed on another annotation. An external component without an `@Expose` interface is discovered but has no interface binding generated.
 
-External scope also works with composed annotations:
+## Extensions and admission
 
-```java
-@Component(scope = ComponentScope.EXTERNAL)
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-public @interface MyAddonComponent {
-}
-```
+`ComponentHandler` adds behavior to matching components; register it with `ServiceLoader`, or name it with `@HandledBy(MyHandler.class)`. `@InterceptedBy(MyInterceptor.class)` applies an interceptor to one component. `ComponentInterceptor` and `ComponentDecoratorHandler` can return `ComponentDecision.DISCARD` at `LOAD`, `INJECTION`, or `ENABLE`. LOAD and INJECTION decisions occur before Guice binding; ENABLE decisions prevent enable and disable callbacks for that component. Interceptors also receive `before`, `after`, and `onFailure` callbacks for `LOAD`, `INJECTION`, `ENABLE`, and `DISABLE`. The older `decide(ComponentContext)` method still applies at LOAD.
 
-## Component handlers
+Compile-time policies implement `ComponentCompileInterceptor` and register through `META-INF/services/com.thewinterframework.processor.component.ComponentCompileInterceptor`. Returning `DISCARD` prevents the component from entering generated indexes. General code generation extensions implement `WinterProcessorExtension` through `ServiceLoader`; these receive round callbacks and can wire plugin modules.
 
-Handlers add a capability to matching components. Winter loads handlers with `ServiceLoader`; a component may also
-name a handler explicitly through `@Component(handlers = ...)`.
+`PluginLifecycleInterceptor` observes `SCAN`, `LOAD`, `INJECTION`, `ENABLE`, and `DISABLE` for the Paper plugin. Add it through `META-INF/services/com.thewinterframework.plugin.lifecycle.PluginLifecycleInterceptor`. Interceptors run by priority and class name; `after` runs in reverse order, and `onFailure` receives the original failure.
 
-```java
-public final class MessageHandler implements ComponentHandler {
-    @Override
-    public boolean supports(final Class<?> componentType) {
-        return MessageEndpoint.class.isAssignableFrom(componentType);
-    }
+## Lifecycle behavior
 
-    @Override
-    public void onEnable(final ComponentContext context) {
-        final var endpoint = (MessageEndpoint) context.instance();
-        // Register the endpoint.
-    }
-}
-```
+Winter resolves explicit `@LoadAfter` and `@LoadBefore` dependencies before starting independent work. A `@SyncLoading` component or module waits for preceding parallel work. Component instances are created during INJECTION, before ENABLE handlers run. When a module fails to load, Winter disables modules whose load completed successfully. During shutdown it attempts every disable callback and preserves failures.
 
-Publish the implementation as `META-INF/services/com.thewinterframework.component.handler.ComponentHandler`, or use
-Google AutoService. This is the integration point for command frameworks and other addons: users annotate their class
-with `@Component`, while the addon owns registration behavior.
-
-## Interceptors
-
-Interceptors wrap `LOAD`, `ENABLE`, and `DISABLE` for a component:
-
-```java
-public final class TimingInterceptor implements ComponentInterceptor {
-    @Override
-    public ComponentDecision decide(final ComponentContext context) {
-        return featureFlags.isEnabled(context.componentType())
-                ? ComponentDecision.CONTINUE
-                : ComponentDecision.DISCARD;
-    }
-
-    @Override
-    public void before(final ComponentPhase phase, final ComponentContext context) {
-        // Start timing.
-    }
-
-    @Override
-    public void after(final ComponentPhase phase, final ComponentContext context) {
-        // Record timing.
-    }
-}
-
-@Component(interceptors = TimingInterceptor.class)
-public final class TimedComponent {
-}
-```
-
-Interceptors declared with `ServiceLoader` are global. Explicit interceptors apply only to the component that declares
-them. Failure callbacks receive the phase, component context, and original exception.
-
-`decide` is the admission gate. Returning `DISCARD` prevents the candidate from being registered, bound in Guice, or
-passed to component handlers and lifecycle callbacks. The decision runs during `LOAD`, before the injector exists, so
-it must use descriptor metadata, plugin configuration, or other load-safe state rather than `context.instance()`.
-
-## Component decorators
-
-Decorators discover type or method annotations and participate in plugin lifecycle:
-
-```java
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-@ComponentDecorator(AuditedHandler.class)
-public @interface Audited {
-}
-
-public final class AuditedHandler implements ComponentDecoratorHandler<Audited> {
-    @Override
-    public Class<Audited> getAnnotationType() {
-        return Audited.class;
-    }
-
-    @Override
-    public ComponentDecision decide(final ComponentContext context) {
-        return isSupported(context.descriptor())
-                ? ComponentDecision.CONTINUE
-                : ComponentDecision.DISCARD;
-    }
-
-    @Override
-    public void onDiscover(
-            final Class<?> component,
-            final AnnotatedMethodHandle<Audited> method
-    ) {
-        // Store validated metadata for a later lifecycle phase.
-    }
-}
-```
-
-Decorator decisions use the same admission semantics as interceptor decisions. Winter evaluates all applicable
-interceptors first and then each decorator handler in deterministic class-name order. The first `DISCARD` stops
-registration, and decorator discovery callbacks are not invoked for that component.
-
-## Lifecycle and failure behavior
-
-Modules and components follow their declared dependency order. A synchronous module waits for earlier asynchronous
-module loads before it runs. An asynchronous module waits for its explicit dependencies. Use `async = true` only for
-work that is safe outside the Paper main thread.
-
-If module loading fails, Winter disables modules whose load completed successfully and closes its executor. During
-normal shutdown, one failing module or component does not prevent later cleanup callbacks from running. A plugin
-whose module load or enable fails does not call its successful startup hook.
-
-Component interceptors run before decorator handlers are constructed. A discarded component is never bound in Guice.
-Only components admitted at `ENABLE` receive component handler disable callbacks. Lifecycle callbacks run once per
-plugin instance; module registration and loading are rejected after loading or shutdown.
-Legacy processor modules also disable only components enabled by their conditions, in reverse registration order.
-Legacy Guice providers can implement other interfaces or inherit their `Provider<T>` contract through a generic base.
-
-For global Adventure formatting extensions, `ComponentUtils.registerGlobalTagResolver`,
-`registerComponentResolver`, and `registerComponentModifier` return registrations that can be closed during plugin
-disable. Resolver overrides should be closed in reverse registration order so the previous resolver is restored.
-
-`TimeUnit` delegates standard temporal operations to `ChronoUnit`; `TICKS` represents 50 milliseconds. `toTicks`
-truncates fractional ticks toward zero and throws on a result outside the `long` range.
-`PaperPluginScheduler.getSync` reports supplier and scheduling failures through its returned future.
-
-`@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` now use this component-wide
-pipeline. The old `ServiceDecorator` API remains available for binary migration.
-
-## Processor extensions
-
-Code-generating addons can implement `WinterProcessorExtension` and register it with `ServiceLoader`:
-
-```java
-public final class AddonProcessor implements WinterProcessorExtension {
-    @Override
-    public Set<String> supportedAnnotationNames() {
-        return Set.of("com.example.GenerateAdapter");
-    }
-
-    @Override
-    public void process(
-            final TypeElement annotation,
-            final Set<? extends Element> elements,
-            final ProcessorContext context
-    ) {
-        // Generate addon metadata and call context.wireModule(...) when required.
-    }
-}
-```
-
-Extensions have deterministic priority through `order()` and round lifecycle callbacks. The legacy
-`WinterAnnotationProcessor` interface adapts to this API, so existing processors can migrate incrementally.
-
-## Migration from 2.x
-
-| 2.x API | 3.0 API |
-| --- | --- |
-| `@Service` | `@Component` |
-| `@ListenerComponent` | `@Component` on a `Listener` |
-| `@ProviderComponent` | `@Component` on a Guice `Provider<T>` |
-| `@ModuleComponent` | `@Component` on a `PluginModule` |
-| Addon-specific component processor | `ComponentHandler` plus an optional composed `@Component` annotation |
-| `ServiceDecoratorHandler` | `ComponentDecoratorHandler` |
-| `WinterAnnotationProcessor` | `WinterProcessorExtension` |
-
-The old component annotations are deprecated rather than removed. Migrate new code first, then remove aliases when
-all consumers have moved to Winter 3.0.
+`@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` use the component pipeline. `ServiceDecoratorHandler` and `WinterAnnotationProcessor` remain available for migration.

@@ -1,6 +1,10 @@
 package com.thewinterframework.processor;
 
+import com.google.inject.Guice;
+import com.thewinterframework.component.ExternalBindingsModule;
 import com.thewinterframework.processor.wire.ClassListWire;
+import com.thewinterframework.component.meta.ComponentDescriptor;
+import com.thewinterframework.component.meta.SyncLoadingIndex;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -28,9 +32,10 @@ class ExternalComponentProcessingTest {
         package external;
 
         import com.thewinterframework.component.annotation.Component;
-        import com.thewinterframework.component.annotation.ComponentScope;
+        import com.thewinterframework.component.annotation.External;
 
-        @Component(scope = ComponentScope.EXTERNAL)
+        @Component
+        @External
         public final class SharedComponent {}
         """
     );
@@ -85,6 +90,120 @@ class ExternalComponentProcessingTest {
       assertTrue(moduleWire.getWiredClasses().stream()
           .anyMatch(type -> type.getName().equals("com.thewinterframework.component.ComponentModule")));
     }
+  }
+
+  @Test
+  void marksDirectBukkitUsageForSynchronousLoading() throws Exception {
+    final var output = temporaryDirectory.resolve("bukkit-output");
+    final var component = writeSource("bukkit/feature/BukkitAware.java", """
+        package feature;
+        import com.thewinterframework.component.annotation.Component;
+        import org.bukkit.Bukkit;
+        @Component
+        public final class BukkitAware {
+          public void load() { Bukkit.getServer(); }
+        }
+        """);
+    final var bukkit = writeSource("bukkit/org/bukkit/Bukkit.java", """
+        package org.bukkit;
+        public final class Bukkit {
+          public static Object getServer() { return null; }
+        }
+        """);
+    final var module = writeSource("bukkit/feature/BukkitModule.java", """
+        package feature;
+        import com.thewinterframework.plugin.WinterPlugin;
+        import com.thewinterframework.plugin.module.PluginModule;
+        import org.bukkit.Bukkit;
+        public final class BukkitModule implements PluginModule {
+          public boolean onLoad(WinterPlugin plugin) { Bukkit.getServer(); return true; }
+        }
+        """);
+
+    assertEquals(0, compile(output, List.of(component, module, bukkit), System.getProperty("java.class.path")));
+    final var syncIndex = Files.readString(output.resolve(SyncLoadingIndex.RESOURCE));
+    assertTrue(syncIndex.contains("feature.BukkitAware"));
+    assertTrue(syncIndex.contains("feature.BukkitModule"));
+    try (final var loader = new URLClassLoader(new java.net.URL[]{output.toUri().toURL()}, getClass().getClassLoader())) {
+      assertTrue(!ComponentDescriptor.from(loader.loadClass("feature.BukkitAware")).async());
+    }
+  }
+
+  @Test
+  void bindsExposedExternalContractInAConsumer() throws Exception {
+    final var producerOutput = temporaryDirectory.resolve("contract-producer-output");
+    final var contract = writeSource("contract-producer/external/SharedContract.java", """
+        package external;
+        import com.thewinterframework.service.annotation.expose.Expose;
+        @Expose
+        public interface SharedContract { String value(); }
+        """);
+    final var base = writeSource("contract-producer/external/SharedBase.java", """
+        package external;
+        public abstract class SharedBase implements SharedContract {}
+        """);
+    final var implementation = writeSource("contract-producer/external/SharedImplementation.java", """
+        package external;
+        import com.thewinterframework.component.annotation.External;
+        @External
+        public final class SharedImplementation extends SharedBase {
+          public String value() { return "ready"; }
+        }
+        """);
+    assertEquals(0, compile(producerOutput, List.of(contract, base, implementation), System.getProperty("java.class.path")));
+    assertTrue(Files.readString(producerOutput.resolve("META-INF/winter/components.index"))
+        .contains("binding:external.SharedContract=external.SharedImplementation"));
+
+    final var consumerOutput = temporaryDirectory.resolve("contract-consumer-output");
+    final var consumer = writeSource("contract-consumer/consumer/ConsumerPlugin.java", """
+        package consumer;
+        import com.thewinterframework.plugin.WinterBootPlugin;
+        @WinterBootPlugin
+        public final class ConsumerPlugin {}
+        """);
+    final var originalLoader = Thread.currentThread().getContextClassLoader();
+    try (final var producerLoader = new URLClassLoader(new java.net.URL[]{producerOutput.toUri().toURL()}, originalLoader)) {
+      Thread.currentThread().setContextClassLoader(producerLoader);
+      final var classPath = System.getProperty("java.class.path")
+          + System.getProperty("path.separator") + producerOutput;
+      assertEquals(0, compile(consumerOutput, List.of(consumer), classPath));
+    } finally {
+      Thread.currentThread().setContextClassLoader(originalLoader);
+    }
+
+    try (final var runtimeLoader = new URLClassLoader(
+        new java.net.URL[]{consumerOutput.toUri().toURL(), producerOutput.toUri().toURL()},
+        getClass().getClassLoader())) {
+      final var provider = (ClassListWire) runtimeLoader.loadClass(
+          "consumer.autogenerated_winter_modules.ProcessorModuleProvider")
+          .getDeclaredConstructor().newInstance();
+      assertTrue(provider.getWiredClasses().contains(ExternalBindingsModule.class));
+      Thread.currentThread().setContextClassLoader(runtimeLoader);
+      try {
+        final var injector = Guice.createInjector(new ExternalBindingsModule());
+        final var contractType = runtimeLoader.loadClass("external.SharedContract");
+        assertEquals("external.SharedImplementation", injector.getInstance(contractType).getClass().getName());
+      } finally {
+        Thread.currentThread().setContextClassLoader(originalLoader);
+      }
+    }
+  }
+
+  @Test
+  void compileInterceptorDiscardsComponentBeforeGeneratingWire() throws Exception {
+    final var output = temporaryDirectory.resolve("discard-output");
+    final var source = writeSource("discard/discard/ExamplePlugin.java", """
+        package discard;
+        import com.thewinterframework.plugin.WinterBootPlugin;
+        @WinterBootPlugin public final class ExamplePlugin {}
+        """);
+    final var discarded = writeSource("discard/discard/DiscardedComponent.java", """
+        package discard;
+        import com.thewinterframework.component.annotation.Component;
+        @Component public final class DiscardedComponent {}
+        """);
+    assertEquals(0, compile(output, List.of(source, discarded), System.getProperty("java.class.path")));
+    assertTrue(!Files.exists(output.resolve("discard/autogenerated_winter_modules/ComponentListWire.class")));
   }
 
   private Path writeSource(final String relativePath, final String source) throws Exception {

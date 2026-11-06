@@ -3,6 +3,7 @@ package com.thewinterframework.component;
 import com.google.inject.Binder;
 import com.google.inject.Scopes;
 import com.thewinterframework.component.annotation.Component;
+import com.thewinterframework.component.annotation.SyncLoading;
 import com.thewinterframework.component.context.ComponentContext;
 import com.thewinterframework.component.handler.ComponentHandler;
 import com.thewinterframework.component.interceptor.ComponentInterceptor;
@@ -10,6 +11,7 @@ import com.thewinterframework.component.lifecycle.ComponentPhase;
 import com.thewinterframework.component.meta.ComponentDescriptor;
 import com.thewinterframework.component.meta.ComponentOrder;
 import com.thewinterframework.plugin.WinterPlugin;
+import com.thewinterframework.plugin.WinterDiagnostics;
 import com.thewinterframework.service.ReloadServiceManager;
 import com.thewinterframework.service.ServiceManager;
 import com.thewinterframework.wire.condition.context.ConditionContext;
@@ -30,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /** Runtime module for every class declared with the unified {@link Component} model. */
+@SyncLoading
 public final class ComponentModule extends AbstractProcessorModule {
 
   private final ServiceManager componentManager = new ServiceManager();
@@ -70,7 +73,9 @@ public final class ComponentModule extends AbstractProcessorModule {
       registerExplicitInterceptors(descriptor);
       if (!componentManager.registerComponent(
           new ComponentContext(plugin, descriptor),
-          selectedInterceptors(descriptor)
+          selectedInterceptors(descriptor),
+          ComponentPhase.LOAD,
+          ComponentPhase.INJECTION
       )) {
         plugin.getSLF4JLogger().debug("Discarded component during admission: {}", componentType.getName());
         continue;
@@ -82,7 +87,7 @@ public final class ComponentModule extends AbstractProcessorModule {
     components = ComponentOrder.resolve(discovered);
     componentManager.loadDecorators(plugin);
     runPhase(plugin, ComponentPhase.LOAD, components);
-    plugin.getSLF4JLogger().info("Loaded {} components", components.size());
+    WinterDiagnostics.log(plugin, "Loaded {} components", components.size());
     return true;
   }
 
@@ -104,10 +109,13 @@ public final class ComponentModule extends AbstractProcessorModule {
   @Override
   public boolean onEnable(final WinterPlugin plugin) throws Exception {
     injectExtensions(plugin);
+    componentManager.injectDecorators(plugin);
     final var enabled = new ArrayList<ComponentDescriptor>();
     for (final var component : components) {
       final var context = new ConditionContext(plugin, component.type());
-      if (evaluateConditions(component.type(), com.thewinterframework.plugin.module.Stage.ENABLE, context, plugin.getInjector())) {
+      if (evaluateConditions(component.type(), com.thewinterframework.plugin.module.Stage.ENABLE, context, plugin.getInjector())
+          && componentManager.admits(new ComponentContext(plugin, component),
+          selectedInterceptors(component), ComponentPhase.ENABLE)) {
         enabled.add(component);
       } else {
         plugin.getSLF4JLogger().debug("Skipped ENABLE (condition failed) for {}", component.type().getSimpleName());
@@ -115,9 +123,10 @@ public final class ComponentModule extends AbstractProcessorModule {
     }
 
     enabledComponents = List.copyOf(enabled);
+    runPhase(plugin, ComponentPhase.INJECTION, enabledComponents);
     runPhase(plugin, ComponentPhase.ENABLE, enabledComponents);
     componentManager.enableDecorators(plugin);
-    plugin.getSLF4JLogger().info("Enabled {} components", enabled.size());
+    WinterDiagnostics.log(plugin, "Enabled {} components", enabled.size());
     return true;
   }
 
@@ -147,7 +156,7 @@ public final class ComponentModule extends AbstractProcessorModule {
     } finally {
       executor.close();
     }
-    plugin.getSLF4JLogger().info("Disabled {} components", enabledComponents.size());
+    WinterDiagnostics.log(plugin, "Disabled {} components", enabledComponents.size());
     return true;
   }
 
@@ -269,6 +278,9 @@ public final class ComponentModule extends AbstractProcessorModule {
       for (final var interceptor : selectedInterceptors) {
         interceptor.before(phase, context);
       }
+      if (phase == ComponentPhase.INJECTION) {
+        context.instance();
+      }
       for (final var handler : orderedHandlers()) {
         if (supports(handler, component)) {
           invoke(handler, phase, context);
@@ -296,6 +308,7 @@ public final class ComponentModule extends AbstractProcessorModule {
   ) throws Exception {
     switch (phase) {
       case LOAD -> handler.onLoad(context);
+      case INJECTION -> handler.onInjection(context);
       case ENABLE -> handler.onEnable(context);
       case DISABLE -> handler.onDisable(context);
     }

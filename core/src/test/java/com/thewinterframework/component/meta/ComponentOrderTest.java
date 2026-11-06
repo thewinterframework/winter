@@ -1,6 +1,8 @@
 package com.thewinterframework.component.meta;
 
 import com.thewinterframework.component.annotation.Component;
+import com.thewinterframework.component.annotation.ComponentPriority;
+import com.thewinterframework.component.annotation.LoadAfter;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -42,27 +44,35 @@ class ComponentOrderTest {
     )));
   }
 
-  @Component(order = 100)
+  @Component
+  @ComponentPriority(100)
   private static final class First {
   }
 
-  @Component(order = -100, after = First.class)
+  @Component
+  @ComponentPriority(-100)
+  @LoadAfter(First.class)
   private static final class Middle {
   }
 
-  @Component(order = -200, after = Middle.class)
+  @Component
+  @ComponentPriority(-200)
+  @LoadAfter(Middle.class)
   private static final class Last {
   }
 
-  @Component(after = CycleTwo.class)
+  @Component
+  @LoadAfter(CycleTwo.class)
   private static final class CycleOne {
   }
 
-  @Component(after = CycleOne.class)
+  @Component
+  @LoadAfter(CycleOne.class)
   private static final class CycleTwo {
   }
 
-  @Component(after = SelfDependent.class)
+  @Component
+  @LoadAfter(SelfDependent.class)
   private static final class SelfDependent {
   }
 }

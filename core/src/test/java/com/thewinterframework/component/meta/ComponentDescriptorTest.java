@@ -1,7 +1,11 @@
 package com.thewinterframework.component.meta;
 
 import com.thewinterframework.component.annotation.Component;
+import com.thewinterframework.component.annotation.HandledBy;
+import com.thewinterframework.component.annotation.InterceptedBy;
+import com.thewinterframework.component.annotation.ComponentPriority;
 import com.thewinterframework.component.annotation.ComponentScope;
+import com.thewinterframework.component.annotation.External;
 import com.thewinterframework.component.handler.ComponentHandler;
 import com.thewinterframework.component.interceptor.ComponentInterceptor;
 import org.junit.jupiter.api.Test;
@@ -48,13 +52,11 @@ class ComponentDescriptorTest {
     assertTrue(descriptor.after().isEmpty());
   }
 
-  @Component(
-      scope = ComponentScope.EXTERNAL,
-      order = 42,
-      async = true,
-      handlers = TestHandler.class,
-      interceptors = TestInterceptor.class
-  )
+  @Component
+  @External
+  @ComponentPriority(42)
+  @HandledBy(TestHandler.class)
+  @InterceptedBy(TestInterceptor.class)
   @Target(ElementType.TYPE)
   @Retention(RetentionPolicy.RUNTIME)
   private @interface AddonComponent {

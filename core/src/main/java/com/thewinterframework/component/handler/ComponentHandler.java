@@ -27,6 +27,9 @@ public interface ComponentHandler {
   default void onLoad(final ComponentContext context) throws Exception {
   }
 
+  default void onInjection(final ComponentContext context) throws Exception {
+  }
+
   default void onEnable(final ComponentContext context) throws Exception {
   }
 

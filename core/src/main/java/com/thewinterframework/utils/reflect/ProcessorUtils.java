@@ -1,11 +1,14 @@
 package com.thewinterframework.utils.reflect;
 
+import com.thewinterframework.processor.config.WinterProperties;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import java.util.Locale;
 
 public final class ProcessorUtils {
   private ProcessorUtils() {
@@ -17,8 +20,8 @@ public final class ProcessorUtils {
   }
 
   public static ProjectType getProjectType(final ProcessingEnvironment env) {
-    final var typeRaw = env.getOptions().getOrDefault("plugin.type", "IMPL");
-    return ProjectType.valueOf(typeRaw.toUpperCase());
+    final var typeRaw = WinterProperties.load(env).get("winter.project.type", "plugin.type", "IMPL");
+    return ProjectType.valueOf(typeRaw.toUpperCase(Locale.ROOT));
   }
 
   public static boolean isChild(final TypeMirror child, final String rootQualifiedName) {
