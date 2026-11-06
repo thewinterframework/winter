@@ -13,14 +13,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,8 +36,10 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 	private final DfsGraph<Class<? extends PluginModule>> moduleGraph = new DfsGraph<>();
 	private final Set<Class<? extends PluginModule>> expandedModules = new HashSet<>();
 	private final Set<Class<? extends PluginModule>> expandingModules = new HashSet<>();
+	private final Set<Class<? extends PluginModule>> loadedModules = ConcurrentHashMap.newKeySet();
 	private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 	private boolean alreadyLoaded;
+	private boolean disabled;
 
 	public PluginModuleManager(final WinterPlugin plugin) {
 		this.plugin = plugin;
@@ -43,7 +48,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 
 	@SuppressWarnings("unchecked")
 	public boolean scanModules() {
-		if (alreadyLoaded) {
+		if (alreadyLoaded || disabled) {
 			return false;
 		}
 
@@ -65,7 +70,8 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 
 	@SuppressWarnings("unchecked")
 	public boolean registerModule(final Class<? extends PluginModule> moduleType) {
-		if (alreadyLoaded) {
+		Objects.requireNonNull(moduleType, "moduleType");
+		if (alreadyLoaded || disabled) {
 			return false;
 		}
 
@@ -128,7 +134,17 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 	}
 
 	public boolean loadModules() {
-		if (!runModules(ModulePhase.LOAD, orderedModules())) {
+		if (alreadyLoaded || disabled) {
+			return false;
+		}
+		try {
+			if (!runModules(ModulePhase.LOAD, orderedModules())) {
+				disableModules();
+				return false;
+			}
+		} catch (final IllegalStateException exception) {
+			logger.error("Cannot resolve module order", exception);
+			disableModules();
 			return false;
 		}
 		alreadyLoaded = true;
@@ -136,7 +152,7 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 	}
 
 	public boolean injectModules() {
-		if (!alreadyLoaded) {
+		if (!alreadyLoaded || disabled) {
 			return false;
 		}
 		final var start = System.currentTimeMillis();
@@ -148,18 +164,25 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 	}
 
 	public boolean enableModules() {
-		return alreadyLoaded && runModules(ModulePhase.ENABLE, orderedModules());
+		return alreadyLoaded && !disabled && runModules(ModulePhase.ENABLE, orderedModules());
 	}
 
 	public boolean disableModules() {
-		if (!alreadyLoaded) {
-			return false;
+		if (disabled) {
+			return true;
 		}
-		final var reverse = new ArrayList<>(orderedModules());
-		Collections.reverse(reverse);
-		final var result = runModules(ModulePhase.DISABLE, reverse);
-		executor.close();
-		return result;
+		disabled = true;
+		try {
+			if (loadedModules.isEmpty()) {
+				return true;
+			}
+			final var reverse = new ArrayList<>(orderedModules());
+			Collections.reverse(reverse);
+			reverse.removeIf(type -> !loadedModules.contains(type));
+			return runModules(ModulePhase.DISABLE, reverse);
+		} finally {
+			executor.close();
+		}
 	}
 
 	public boolean isRegistered(final Class<? extends PluginModule> type) {
@@ -172,7 +195,11 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 	}
 
 	public Set<Module> asGuiceModules() {
-		return Set.copyOf(registeredModules.values());
+		final Set<Module> modules = new LinkedHashSet<>();
+		for (final var type : orderedModules()) {
+			modules.add(registeredModules.get(type));
+		}
+		return Collections.unmodifiableSet(modules);
 	}
 
 	@NotNull
@@ -200,6 +227,21 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 			final List<Class<? extends PluginModule>> ordered
 	) {
 		final var start = System.currentTimeMillis();
+		if (phase == ModulePhase.DISABLE) {
+			boolean successful = true;
+			for (final var moduleType : ordered) {
+				try {
+					if (!invokeModule(phase, moduleType)) {
+						successful = false;
+					}
+				} catch (final RuntimeException exception) {
+					logger.error("Failed to disable module {}", moduleType.getName(), exception);
+					successful = false;
+				}
+			}
+			logger.info("{} modules in {}ms", phase.pastTense, System.currentTimeMillis() - start);
+			return successful;
+		}
 		final var completion = new HashMap<Class<? extends PluginModule>, CompletableFuture<Boolean>>();
 
 		try {
@@ -212,13 +254,13 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 				final CompletableFuture<Boolean> result;
 				if (isAsync(moduleType) && phase != ModulePhase.DISABLE) {
 					result = ready.thenApplyAsync(
-							unused -> dependenciesSucceeded(dependencies) && invokeModule(phase, moduleType),
+							unused -> dependenciesSucceeded(dependencies) && invokeModuleSafely(phase, moduleType),
 							executor
 					);
 				} else {
-					ready.join();
+					CompletableFuture.allOf(completion.values().toArray(CompletableFuture[]::new)).join();
 					result = CompletableFuture.completedFuture(
-							dependenciesSucceeded(dependencies) && invokeModule(phase, moduleType)
+							dependenciesSucceeded(dependencies) && invokeModuleSafely(phase, moduleType)
 					);
 				}
 				completion.put(moduleType, result);
@@ -257,6 +299,9 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 				case DISABLE -> module.onDisable(plugin);
 			};
 			if (successful) {
+				if (phase == ModulePhase.LOAD) {
+					loadedModules.add(moduleType);
+				}
 				logger.info("Module '{}' {}", moduleType.getSimpleName(), phase.pastTense);
 			} else {
 				logger.error("Module '{}' failed to {}", moduleType.getSimpleName(), phase.action);
@@ -264,6 +309,15 @@ public class PluginModuleManager implements Iterable<Class<? extends PluginModul
 			return successful;
 		} catch (final Exception exception) {
 			throw new CompletionException("Failed to " + phase.action + " module " + moduleType.getName(), exception);
+		}
+	}
+
+	private boolean invokeModuleSafely(final ModulePhase phase, final Class<? extends PluginModule> moduleType) {
+		try {
+			return invokeModule(phase, moduleType);
+		} catch (final RuntimeException exception) {
+			logger.error("Failed to {} module {}", phase.action, moduleType.getName(), exception);
+			return false;
 		}
 	}
 

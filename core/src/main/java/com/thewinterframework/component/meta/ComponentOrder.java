@@ -26,7 +26,9 @@ public final class ComponentOrder {
 		final var inDegree = new HashMap<ComponentDescriptor, Integer>();
 
 		for (final var component : components) {
-			byType.put(component.type(), component);
+			if (byType.putIfAbsent(component.type(), component) != null) {
+				throw new IllegalArgumentException("Duplicate component: " + component.type().getName());
+			}
 			outgoing.put(component, new HashSet<>());
 			inDegree.put(component, 0);
 		}
@@ -73,8 +75,11 @@ public final class ComponentOrder {
 			final Map<ComponentDescriptor, Set<ComponentDescriptor>> outgoing,
 			final Map<ComponentDescriptor, Integer> inDegree
 	) {
-		if (source == null || target == null || source.equals(target)) {
+		if (source == null || target == null) {
 			return;
+		}
+		if (source.equals(target)) {
+			throw new IllegalStateException("Component cannot depend on itself: " + source.type().getName());
 		}
 		if (outgoing.get(source).add(target)) {
 			inDegree.compute(target, (unused, degree) -> degree + 1);

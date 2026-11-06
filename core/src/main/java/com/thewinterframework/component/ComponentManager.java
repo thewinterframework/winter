@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -43,7 +44,6 @@ public class ComponentManager {
 			final @NotNull ComponentContext context,
 			final @NotNull Collection<? extends ComponentInterceptor> interceptors
 	) throws Exception {
-		final var candidates = decoratorCandidates(context.componentType());
 		final var orderedInterceptors = interceptors.stream()
 				.sorted(Comparator.comparingInt(ComponentInterceptor::order)
 						.thenComparing(interceptor -> interceptor.getClass().getName()))
@@ -54,6 +54,7 @@ public class ComponentManager {
 			}
 		}
 
+		final var candidates = decoratorCandidates(context.componentType());
 		final var orderedDecorators = candidates.values().stream()
 				.sorted(Comparator.comparing(handler -> handler.getClass().getName()))
 				.toList();
@@ -164,7 +165,21 @@ public class ComponentManager {
 	}
 
 	public void disableDecorators(final WinterPlugin plugin) {
-		decorators.values().forEach(handler -> handler.onPluginDisable(plugin));
+		RuntimeException failure = null;
+		for (final var handler : decorators.values()) {
+			try {
+				handler.onPluginDisable(plugin);
+			} catch (final RuntimeException exception) {
+				if (failure == null) {
+					failure = exception;
+				} else {
+					failure.addSuppressed(exception);
+				}
+			}
+		}
+		if (failure != null) {
+			throw failure;
+		}
 	}
 
 	@Nullable
@@ -174,7 +189,7 @@ public class ComponentManager {
 	}
 
 	public Set<ComponentDescriptor> components() {
-		return new LinkedHashSet<>(components.values());
+		return Collections.unmodifiableSet(new LinkedHashSet<>(components.values()));
 	}
 
 	private <T> T createInstance(final Class<T> type) {

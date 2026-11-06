@@ -10,9 +10,12 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 class ComponentDescriptorTest {
 
@@ -25,6 +28,24 @@ class ComponentDescriptorTest {
 		assertTrue(descriptor.async());
 		assertEquals(TestHandler.class, descriptor.handlers().getFirst());
 		assertEquals(TestInterceptor.class, descriptor.interceptors().getFirst());
+	}
+
+	@Test
+	void copiesMutableMetadataLists() {
+		final var dependencies = new ArrayList<Class<?>>();
+		final var descriptor = new ComponentDescriptor(
+				ExternalAddon.class,
+				ComponentScope.EXTERNAL,
+				0,
+				dependencies,
+				List.of(),
+				false,
+				List.of(),
+				List.of()
+		);
+		dependencies.add(TestHandler.class);
+
+		assertTrue(descriptor.after().isEmpty());
 	}
 
 	@Component(

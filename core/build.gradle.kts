@@ -35,6 +35,10 @@ dependencies {
 	testImplementation(libs.junit.api)
 	testRuntimeOnly(libs.junit.engine)
 	testRuntimeOnly(libs.adventure)
+	testRuntimeOnly(libs.minimessage)
+	testRuntimeOnly(libs.kyori.text)
+	testRuntimeOnly(libs.kyori.legacy)
+	testRuntimeOnly("org.slf4j:slf4j-api:1.7.29")
 }
 
 tasks.test {

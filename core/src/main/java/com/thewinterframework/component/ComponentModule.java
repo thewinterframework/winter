@@ -18,11 +18,11 @@ import com.thewinterframework.wire.module.AbstractProcessorModule;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -38,6 +38,7 @@ public final class ComponentModule extends AbstractProcessorModule {
 	private final Set<Class<? extends ComponentInterceptor>> globalInterceptors = new HashSet<>();
 	private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 	private List<ComponentDescriptor> components = List.of();
+	private List<ComponentDescriptor> enabledComponents = List.of();
 
 	public ComponentModule() {
 		super(Component.class);
@@ -45,6 +46,15 @@ public final class ComponentModule extends AbstractProcessorModule {
 
 	@Override
 	public boolean onLoad(final WinterPlugin plugin) throws Exception {
+		try {
+			return loadComponents(plugin);
+		} catch (final Exception | Error failure) {
+			executor.close();
+			throw failure;
+		}
+	}
+
+	private boolean loadComponents(final WinterPlugin plugin) throws Exception {
 		initWire(plugin);
 		discoverExtensions(plugin);
 
@@ -104,7 +114,8 @@ public final class ComponentModule extends AbstractProcessorModule {
 			}
 		}
 
-		runPhase(plugin, ComponentPhase.ENABLE, enabled);
+		enabledComponents = List.copyOf(enabled);
+		runPhase(plugin, ComponentPhase.ENABLE, enabledComponents);
 		componentManager.enableDecorators(plugin);
 		plugin.getSLF4JLogger().info("Enabled {} components", enabled.size());
 		return true;
@@ -113,14 +124,30 @@ public final class ComponentModule extends AbstractProcessorModule {
 	@Override
 	public boolean onDisable(final WinterPlugin plugin) throws Exception {
 		try {
-			componentManager.disableDecorators(plugin);
-			final var reverse = new ArrayList<>(components);
+			Exception failure = null;
+			try {
+				componentManager.disableDecorators(plugin);
+			} catch (final Exception exception) {
+				failure = exception;
+			}
+			final var reverse = new ArrayList<>(enabledComponents);
 			java.util.Collections.reverse(reverse);
-			runPhase(plugin, ComponentPhase.DISABLE, reverse);
+			try {
+				runPhase(plugin, ComponentPhase.DISABLE, reverse);
+			} catch (final Exception exception) {
+				if (failure == null) {
+					failure = exception;
+				} else {
+					failure.addSuppressed(exception);
+				}
+			}
+			if (failure != null) {
+				throw failure;
+			}
 		} finally {
 			executor.close();
 		}
-		plugin.getSLF4JLogger().info("Disabled {} components", components.size());
+		plugin.getSLF4JLogger().info("Disabled {} components", enabledComponents.size());
 		return true;
 	}
 
@@ -178,8 +205,20 @@ public final class ComponentModule extends AbstractProcessorModule {
 			final List<ComponentDescriptor> ordered
 	) throws Exception {
 		if (phase == ComponentPhase.DISABLE) {
+			CompletionException failure = null;
 			for (final var component : ordered) {
-				executeComponent(plugin, phase, component);
+				try {
+					executeComponent(plugin, phase, component);
+				} catch (final CompletionException exception) {
+					if (failure == null) {
+						failure = exception;
+					} else {
+						failure.addSuppressed(exception);
+					}
+				}
+			}
+			if (failure != null) {
+				throw failure;
 			}
 			return;
 		}

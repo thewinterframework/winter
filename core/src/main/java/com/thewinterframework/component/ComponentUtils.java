@@ -8,7 +8,12 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.UnaryOperator;
 
 /**
@@ -20,39 +25,57 @@ public final class ComponentUtils {
 	/**
 	 * The MiniMessage instance used for parsing and serializing components.
 	 */
-	private final static MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
+	private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
 	/**
 	 * The legacy component serializer for section components (§).
 	 */
-	private final static LegacyComponentSerializer LEGACY_SECTION_COMPONENT_SERIALIZER = LegacyComponentSerializer.legacySection();
+	private static final LegacyComponentSerializer LEGACY_SECTION_COMPONENT_SERIALIZER = LegacyComponentSerializer.legacySection();
 
 	/**
 	 * The legacy component serializer for ampersand components (&).
 	 */
-	private final static LegacyComponentSerializer LEGACY_AMPERSAND_COMPONENT_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
+	private static final LegacyComponentSerializer LEGACY_AMPERSAND_COMPONENT_SERIALIZER = LegacyComponentSerializer.legacyAmpersand();
 
 	/**
 	 * The plain text component serializer.
 	 */
-	private final static PlainTextComponentSerializer PLAIN_TEXT_COMPONENT_SERIALIZER = PlainTextComponentSerializer.plainText();
+	private static final PlainTextComponentSerializer PLAIN_TEXT_COMPONENT_SERIALIZER = PlainTextComponentSerializer.plainText();
 
 	/**
 	 * The global tag resolvers, which are used when parsing MiniMessage components.
 	 */
-	private final static Collection<TagResolver> GLOBAL_TAG_RESOLVERS = new ArrayList<>();
+	private static final Collection<TagResolver> GLOBAL_TAG_RESOLVERS = new CopyOnWriteArrayList<>();
 
 	/**
 	 * The component resolvers, which are used to resolve objects into components.
 	 */
-	private final static Map<Class<?>, ComponentResolver<?>> COMPONENT_RESOLVERS = new HashMap<>();
+	private static final Map<Class<?>, ComponentResolver<?>> COMPONENT_RESOLVERS = new ConcurrentHashMap<>();
 
 	/**
 	 * The component modifiers, which are used to modify components after they are resolved.
 	 */
-	private final static Collection<UnaryOperator<Component>> COMPONENT_MODIFIERS = new HashSet<>();
+	private static final Collection<UnaryOperator<Component>> COMPONENT_MODIFIERS = new CopyOnWriteArraySet<>();
 
 	private ComponentUtils() {
+	}
+
+	/** A registration owned by the caller and removed when closed. */
+	@FunctionalInterface
+	public interface Registration extends AutoCloseable {
+		@Override
+		void close();
+	}
+
+	/**
+	 * Registers a global tag resolver until the returned registration is closed.
+	 *
+	 * @param tagResolver the resolver to register
+	 * @return the owned registration
+	 */
+	public static Registration registerGlobalTagResolver(final @NotNull TagResolver tagResolver) {
+		GLOBAL_TAG_RESOLVERS.add(tagResolver);
+		return () -> GLOBAL_TAG_RESOLVERS.remove(tagResolver);
 	}
 
 	/**
@@ -65,6 +88,28 @@ public final class ComponentUtils {
 	}
 
 	/**
+	 * Registers a resolver and restores the previous resolver when closed, if it has not been replaced again.
+	 *
+	 * @param clazz the resolved type
+	 * @param resolver the resolver to register
+	 * @param <T> the resolved type
+	 * @return the owned registration
+	 */
+	public static <T> Registration registerComponentResolver(
+			final @NotNull Class<T> clazz,
+			final @NotNull ComponentResolver<T> resolver
+	) {
+		final var previous = COMPONENT_RESOLVERS.put(clazz, resolver);
+		return () -> {
+			if (previous == null) {
+				COMPONENT_RESOLVERS.remove(clazz, resolver);
+			} else {
+				COMPONENT_RESOLVERS.replace(clazz, resolver, previous);
+			}
+		};
+	}
+
+	/**
 	 * Adds a component resolver.
 	 *
 	 * @param clazz    The class to resolve.
@@ -73,6 +118,21 @@ public final class ComponentUtils {
 	 */
 	public static <T> void addComponentResolver(final @NotNull Class<T> clazz, final @NotNull ComponentResolver<T> resolver) {
 		COMPONENT_RESOLVERS.put(clazz, resolver);
+	}
+
+	/**
+	 * Registers a modifier until the returned registration is closed.
+	 *
+	 * @param modifier the modifier to register
+	 * @return the owned registration
+	 */
+	public static Registration registerComponentModifier(final @NotNull UnaryOperator<Component> modifier) {
+		final var added = COMPONENT_MODIFIERS.add(modifier);
+		return () -> {
+			if (added) {
+				COMPONENT_MODIFIERS.remove(modifier);
+			}
+		};
 	}
 
 	/**

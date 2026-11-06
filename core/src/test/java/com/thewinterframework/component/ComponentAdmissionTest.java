@@ -25,6 +25,7 @@ class ComponentAdmissionTest {
 	@BeforeEach
 	void resetDiscoveries() {
 		RejectingDecorator.discoveries = 0;
+		RejectingDecorator.constructions = 0;
 	}
 
 	@Test
@@ -39,6 +40,7 @@ class ComponentAdmissionTest {
 
 		assertFalse(registered);
 		assertEquals(0, manager.components().size());
+		assertEquals(0, RejectingDecorator.constructions);
 	}
 
 	@Test
@@ -74,6 +76,11 @@ class ComponentAdmissionTest {
 	static final class RejectingDecorator implements ComponentDecoratorHandler<Rejected> {
 
 		private static int discoveries;
+		private static int constructions;
+
+		RejectingDecorator() {
+			constructions++;
+		}
 
 		@Override
 		public Class<Rejected> getAnnotationType() {
@@ -92,6 +99,7 @@ class ComponentAdmissionTest {
 	}
 
 	@Component(interceptors = RejectingInterceptor.class)
+	@Rejected
 	private static final class InterceptedComponent {
 	}
 

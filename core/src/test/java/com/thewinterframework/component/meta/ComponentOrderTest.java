@@ -29,6 +29,19 @@ class ComponentOrderTest {
 		)));
 	}
 
+	@Test
+	void rejectsDuplicateComponents() {
+		final var descriptor = ComponentDescriptor.from(First.class);
+		assertThrows(IllegalArgumentException.class, () -> ComponentOrder.resolve(List.of(descriptor, descriptor)));
+	}
+
+	@Test
+	void rejectsSelfDependencies() {
+		assertThrows(IllegalStateException.class, () -> ComponentOrder.resolve(List.of(
+				ComponentDescriptor.from(SelfDependent.class)
+		)));
+	}
+
 	@Component(order = 100)
 	private static final class First {
 	}
@@ -47,5 +60,9 @@ class ComponentOrderTest {
 
 	@Component(after = CycleOne.class)
 	private static final class CycleTwo {
+	}
+
+	@Component(after = SelfDependent.class)
+	private static final class SelfDependent {
 	}
 }

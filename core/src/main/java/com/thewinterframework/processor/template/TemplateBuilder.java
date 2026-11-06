@@ -4,11 +4,13 @@ import com.thewinterframework.processor.context.ProcessorContext;
 
 import javax.annotation.processing.Filer;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
@@ -22,7 +24,12 @@ public final class TemplateBuilder {
 	private final List<UnaryOperator<String>> processors = new ArrayList<>();
 
 	private TemplateBuilder(final String template) {
-		this.template = template;
+		this.template = Objects.requireNonNull(template, "template");
+	}
+
+	/** Creates a builder for an in-memory template. */
+	public static TemplateBuilder fromString(final String template) {
+		return new TemplateBuilder(template);
 	}
 
 	public static TemplateBuilder fromResource(final String path) {
@@ -33,7 +40,7 @@ public final class TemplateBuilder {
 			final var content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
 			return new TemplateBuilder(content);
 		} catch (final IOException e) {
-			throw new RuntimeException(e);
+			throw new UncheckedIOException("Cannot read template: " + path, e);
 		}
 	}
 
@@ -43,8 +50,7 @@ public final class TemplateBuilder {
 	}
 
 	/**
-	 * Permite inyectar lógica de procesamiento personalizada (Regex, transformaciones, etc.)
-	 * sobre el texto después de haber procesado loops y placeholders.
+	 * Applies a custom transformation after loops and placeholders have been rendered.
 	 */
 	public TemplateBuilder custom(final UnaryOperator<String> processor) {
 		this.processors.add(processor);
@@ -110,7 +116,7 @@ public final class TemplateBuilder {
 
 	private String processLoop(final String input, final String id, final List<Map<String, String>> items) {
 		final var pattern = Pattern.compile(
-				"<EACH_" + id + ">([\\s\\S]*?)</EACH_" + id + ">",
+				"<EACH_" + Pattern.quote(id) + ">([\\s\\S]*?)</EACH_" + Pattern.quote(id) + ">",
 				Pattern.MULTILINE
 		);
 
@@ -145,7 +151,7 @@ public final class TemplateBuilder {
 				writer.write(render());
 			}
 		} catch (final IOException e) {
-			throw new RuntimeException(e);
+			throw new UncheckedIOException("Cannot write generated source: " + fullyQualifiedName, e);
 		}
 	}
 }

@@ -1,7 +1,10 @@
 package com.thewinterframework.paper;
 
-import com.google.inject.*;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Stage;
 import com.thewinterframework.expression.ExpressionResolver;
 import com.thewinterframework.expression.JexlExpressionResolver;
 import com.thewinterframework.paper.platform.PaperPlatform;
@@ -21,6 +24,8 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 /**
  * A base class for Winter plugins that use Paper.
@@ -34,30 +39,49 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	protected ExpressionResolver expressionResolver = new JexlExpressionResolver();
 
 	protected @Inject Injector injector;
+	private boolean modulesLoaded;
 
 	@Override
 	public final void onLoad() {
 		final var startTime = System.currentTimeMillis();
-		if (!moduleManager.scanModules() || !moduleManager.loadModules()) {
+		try {
+			modulesLoaded = moduleManager.scanModules() && moduleManager.loadModules();
+			if (!modulesLoaded) {
+				moduleManager.disableModules();
+				Bukkit.getPluginManager().disablePlugin(this);
+				return;
+			}
+			onPluginLoad();
+			getSLF4JLogger().info("Plugin loaded in {}ms", System.currentTimeMillis() - startTime);
+		} catch (final RuntimeException exception) {
+			getSLF4JLogger().error("Plugin load failed", exception);
+			modulesLoaded = false;
+			moduleManager.disableModules();
 			Bukkit.getPluginManager().disablePlugin(this);
 		}
-
-		onPluginLoad();
-		getSLF4JLogger().info("Plugin loaded in {}ms", System.currentTimeMillis() - startTime);
 	}
 
 	@Override
 	public final void onEnable() {
 		final var startTime = System.currentTimeMillis();
-		final var injector = createInjector();
-		injector.injectMembers(this);
-
-		if (!moduleManager.injectModules() || !moduleManager.enableModules()) {
+		if (!modulesLoaded) {
+			getSLF4JLogger().error("Cannot enable plugin because its modules did not load");
+			Bukkit.getPluginManager().disablePlugin(this);
+			return;
+		}
+		try {
+			final var injector = createInjector();
+			injector.injectMembers(this);
+			if (!moduleManager.injectModules() || !moduleManager.enableModules()) {
+				Bukkit.getPluginManager().disablePlugin(this);
+				return;
+			}
+			onPluginEnable();
+			getSLF4JLogger().info("Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
+		} catch (final RuntimeException exception) {
+			getSLF4JLogger().error("Plugin enable failed", exception);
 			Bukkit.getPluginManager().disablePlugin(this);
 		}
-
-		onPluginEnable();
-		getSLF4JLogger().info("Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
 	}
 
 	protected Injector createInjector() {
@@ -67,11 +91,17 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 	@Override
 	public final void onDisable() {
 		final var startTime = System.currentTimeMillis();
-		if (!moduleManager.disableModules()) {
-			Bukkit.getPluginManager().disablePlugin(this);
+		try {
+			if (!moduleManager.disableModules()) {
+				getSLF4JLogger().error("One or more modules failed to disable");
+			}
+			if (modulesLoaded && injector != null) {
+				onPluginDisable();
+			}
+		} finally {
+			scheduler.cancelAllTasks();
 		}
 
-		onPluginDisable();
 		getSLF4JLogger().info("Plugin disabled in {}ms", System.currentTimeMillis() - startTime);
 	}
 
@@ -87,7 +117,7 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 
 	@Override
 	public void setExpressionResolver(final ExpressionResolver resolver) {
-		this.expressionResolver = resolver;
+		this.expressionResolver = Objects.requireNonNull(resolver, "resolver");
 	}
 
 	@Override
@@ -132,8 +162,7 @@ public abstract class PaperWinterPlugin extends JavaPlugin implements WinterPlug
 
 	@Override
 	@KeyPattern.Namespace
-	@SuppressWarnings("all") // lol
 	public @NotNull String namespace() {
-		return this.getName().toLowerCase();
+		return this.getName().toLowerCase(Locale.ROOT);
 	}
 }

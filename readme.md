@@ -268,6 +268,24 @@ Decorator decisions use the same admission semantics as interceptor decisions. W
 interceptors first and then each decorator handler in deterministic class-name order. The first `DISCARD` stops
 registration, and decorator discovery callbacks are not invoked for that component.
 
+## Lifecycle and failure behavior
+
+Modules and components follow their declared dependency order. A synchronous module waits for earlier asynchronous
+module loads before it runs. An asynchronous module waits for its explicit dependencies. Use `async = true` only for
+work that is safe outside the Paper main thread.
+
+If module loading fails, Winter disables modules whose load completed successfully and closes its executor. During
+normal shutdown, one failing module or component does not prevent later cleanup callbacks from running. A plugin
+whose module load or enable fails does not call its successful startup hook.
+
+Component interceptors run before decorator handlers are constructed. A discarded component is never bound in Guice.
+Only components admitted at `ENABLE` receive component handler disable callbacks. Lifecycle callbacks run once per
+plugin instance; module registration and loading are rejected after loading or shutdown.
+
+For global Adventure formatting extensions, `ComponentUtils.registerGlobalTagResolver`,
+`registerComponentResolver`, and `registerComponentModifier` return registrations that can be closed during plugin
+disable. Resolver overrides should be closed in reverse registration order so the previous resolver is restored.
+
 `@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` now use this component-wide
 pipeline. The old `ServiceDecorator` API remains available for binary migration.
 

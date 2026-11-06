@@ -8,6 +8,7 @@ import com.thewinterframework.component.interceptor.ComponentInterceptor;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /** Immutable runtime metadata for a component. */
 public record ComponentDescriptor(
@@ -20,6 +21,15 @@ public record ComponentDescriptor(
 		List<Class<? extends ComponentHandler>> handlers,
 		List<Class<? extends ComponentInterceptor>> interceptors
 ) {
+
+	public ComponentDescriptor {
+		Objects.requireNonNull(type, "type");
+		Objects.requireNonNull(scope, "scope");
+		after = List.copyOf(after);
+		before = List.copyOf(before);
+		handlers = List.copyOf(handlers);
+		interceptors = List.copyOf(interceptors);
+	}
 
 	public static ComponentDescriptor from(final Class<?> type) {
 		final var component = findComponent(type);

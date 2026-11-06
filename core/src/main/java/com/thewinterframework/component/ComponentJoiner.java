@@ -21,6 +21,7 @@ public class ComponentJoiner {
 	 * The result of the join operation.
 	 */
 	private Component result = Component.empty();
+	private boolean empty = true;
 
 	/**
 	 * Creates a new component joiner with the given delimiter.
@@ -47,8 +48,9 @@ public class ComponentJoiner {
 	 * @return The component joiner.
 	 */
 	public ComponentJoiner append(final @NotNull Component component) {
-		if (isEmpty()) {
+		if (empty) {
 			result = component;
+			empty = false;
 		} else {
 			result = result.append(delimiter).append(component);
 		}
@@ -67,6 +69,6 @@ public class ComponentJoiner {
 	 * @return Whether the joiner is empty.
 	 */
 	public boolean isEmpty() {
-		return result.equals(Component.empty());
+		return empty;
 	}
 }

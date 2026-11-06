@@ -9,17 +9,23 @@ import com.thewinterframework.service.annotation.expose.Expose;
 import com.thewinterframework.utils.reflect.ProcessorUtils;
 import com.thewinterframework.utils.reflect.ProcessorUtils.ProjectType;
 
-import javax.annotation.processing.*;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Processor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedOptions;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.tools.StandardLocation;
+import java.io.IOException;
+import java.util.Comparator;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static com.thewinterframework.service.processor.ExposeAnnotationProcessor.ELEMENT_PATTERN;
 
 @AutoService(Processor.class)
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
 @SupportedOptions({
 		"plugin.type",
 		"plugin.package",
@@ -27,6 +33,11 @@ import static com.thewinterframework.service.processor.ExposeAnnotationProcessor
 		"bypass.api"
 })
 public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
+
+	@Override
+	public SourceVersion getSupportedSourceVersion() {
+		return SourceVersion.latestSupported();
+	}
 
 	@Override
 	public boolean process(final Set<? extends TypeElement> annotations, final RoundEnvironment roundEnv) {
@@ -46,7 +57,9 @@ public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
 		final var validElements = roundEnv.getElementsAnnotatedWith(Expose.class).stream()
 				.filter(e -> e.getKind().isDeclaredType())
 				.map(e -> (TypeElement) e)
-				.collect(Collectors.toSet());
+				.collect(Collectors.toCollection(() -> new TreeSet<>(
+						Comparator.comparing(element -> element.getQualifiedName().toString())
+				)));
 
 		if (validElements.isEmpty()) {
 			return false;
@@ -64,7 +77,7 @@ public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
 			try (final var writer = file.openWriter()) {
 				writer.write(builder.toString());
 			}
-		} catch (final Exception e) {
+		} catch (final IOException e) {
 			processingEnv.getMessager().printError("Failed to write exposed classes to file: " + e.getMessage());
 			return false;
 		}
@@ -78,7 +91,11 @@ public class ExposeAnnotationProcessorAPI extends AbstractProcessor {
 
 	private String getPluginPkg(final RoundEnvironment roundEnv) {
 		if (isAPIBypassed()) {
-			return WinterProcessor.getPluginClass(roundEnv, processingEnv).getClass().getPackageName();
+			final Element pluginClass = WinterProcessor.getPluginClass(roundEnv, processingEnv);
+			if (pluginClass == null) {
+				throw new IllegalStateException("bypass.api requires a @WinterBootPlugin class");
+			}
+			return processingEnv.getElementUtils().getPackageOf(pluginClass).getQualifiedName().toString();
 		}
 
 		return getOption("plugin.package", "com.default.api");
