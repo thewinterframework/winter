@@ -11,14 +11,17 @@ import com.thewinterframework.wire.condition.context.ConditionContext;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import static java.lang.Class.forName;
 
 public abstract class AbstractProcessorModule implements ProcessorModule {
 
-	protected final Set<Class<?>> activeComponents = new HashSet<>();
+	protected final Set<Class<?>> activeComponents = new LinkedHashSet<>();
+	protected final Set<Class<?>> enabledComponents = new LinkedHashSet<>();
 	protected final Class<? extends Annotation> moduleAnnotation;
 	protected ClassListWire wire;
 
@@ -32,7 +35,7 @@ public abstract class AbstractProcessorModule implements ProcessorModule {
 		}
 
 		final var wiredClass = forName(ClassWireProcessor.canonicalWiredClassName(plugin, moduleAnnotation), true, plugin.getClass().getClassLoader());
-		this.wire = (ClassListWire) wiredClass.getConstructors()[0].newInstance();
+		this.wire = wiredClass.asSubclass(ClassListWire.class).getDeclaredConstructor().newInstance();
 	}
 
 	protected boolean evaluateConditions(final AnnotatedElement componentClass, final Stage targetStage, final ConditionContext context, final Injector injector) throws Exception {
@@ -93,6 +96,7 @@ public abstract class AbstractProcessorModule implements ProcessorModule {
 
 			if (evaluateConditions(componentClass, Stage.ENABLE, enableContext, plugin.getInjector())) {
 				enableComponent(plugin, componentClass);
+				enabledComponents.add(componentClass);
 				enabledCount++;
 			} else {
 				plugin.getSLF4JLogger().debug("Skipped ENABLE (Condition failed) for {}", componentClass.getSimpleName());
@@ -106,15 +110,27 @@ public abstract class AbstractProcessorModule implements ProcessorModule {
 	@Override
 	public boolean onDisable(final WinterPlugin plugin) throws Exception {
 		final var start = System.currentTimeMillis();
-		var disabledCount = 0;
-
-		for (final var componentClass : activeComponents) {
-			disableComponent(plugin, componentClass);
-			disabledCount++;
+		final var reverse = new ArrayList<>(enabledComponents);
+		Collections.reverse(reverse);
+		Exception failure = null;
+		for (final var componentClass : reverse) {
+			try {
+				disableComponent(plugin, componentClass);
+			} catch (final Exception exception) {
+				if (failure == null) {
+					failure = exception;
+				} else {
+					failure.addSuppressed(exception);
+				}
+			}
 		}
 
+		enabledComponents.clear();
 		activeComponents.clear();
-		plugin.getSLF4JLogger().debug("Disabled {} {} components in {}ms", disabledCount, moduleAnnotation.getSimpleName(), System.currentTimeMillis() - start);
+		plugin.getSLF4JLogger().debug("Disabled {} {} components in {}ms", reverse.size(), moduleAnnotation.getSimpleName(), System.currentTimeMillis() - start);
+		if (failure != null) {
+			throw failure;
+		}
 		return true;
 	}
 }

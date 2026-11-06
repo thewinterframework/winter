@@ -29,7 +29,7 @@ public class ProviderModule extends AbstractProcessorModule {
 
 	@SuppressWarnings("unchecked")
 	private static <T> TypeLiteral<T> resolveTypeLiteral(final @NotNull Class<? extends Provider<T>> providerClass) {
-		final var generic = providerClass.getGenericInterfaces()[0];
+		final var generic = TypeLiteral.get(providerClass).getSupertype(Provider.class).getType();
 		if (!(generic instanceof final ParameterizedType parameterizedType)) {
 			throw new IllegalStateException("Provider is not parameterized");
 		}

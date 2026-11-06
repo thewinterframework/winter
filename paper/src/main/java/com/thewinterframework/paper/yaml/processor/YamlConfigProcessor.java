@@ -11,10 +11,10 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import java.lang.annotation.Annotation;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @AutoService(WinterAnnotationProcessor.class)
 public class YamlConfigProcessor implements WinterAnnotationProcessor {
@@ -31,7 +31,8 @@ public class YamlConfigProcessor implements WinterAnnotationProcessor {
 		final var fields = elements.stream()
 				.filter(e -> e.getKind() == ElementKind.FIELD || e.getKind() == ElementKind.PARAMETER)
 				.map(e -> (VariableElement) e)
-				.collect(Collectors.toSet());
+				.sorted(Comparator.comparing(field -> field.getEnclosingElement() + "#" + field.getSimpleName()))
+				.toList();
 
 		if (fields.isEmpty()) {
 			return;
@@ -57,7 +58,9 @@ public class YamlConfigProcessor implements WinterAnnotationProcessor {
 
 						for (final var field : fields) {
 							final var ann = field.getAnnotation(FileName.class);
-							if (ann == null || !alreadyWritten.add(ann.value())) continue;
+							if (ann == null || !alreadyWritten.add(ann.value())) {
+								continue;
+							}
 
 							builder.append(block
 									.replace("<FILE_NAME>", ann.value())

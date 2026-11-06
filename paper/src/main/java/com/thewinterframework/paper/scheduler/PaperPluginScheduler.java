@@ -73,18 +73,23 @@ public class PaperPluginScheduler implements PluginScheduler {
 
 	@Override
 	public <T> CompletableFuture<T> getSync(final Supplier<T> supplier) {
-		if (Bukkit.isPrimaryThread()) {
-			return CompletableFuture.completedFuture(supplier.get());
-		} else {
-			final var future = new CompletableFuture<T>();
-			runSync(() -> {
-				try {
-					future.complete(supplier.get());
-				} catch (final Throwable e) {
-					future.completeExceptionally(e);
-				}
-			});
-			return future;
+		final var future = new CompletableFuture<T>();
+		final Runnable task = () -> {
+			try {
+				future.complete(supplier.get());
+			} catch (final Throwable failure) {
+				future.completeExceptionally(failure);
+			}
+		};
+		try {
+			if (Bukkit.isPrimaryThread()) {
+				task.run();
+			} else {
+				runSync(task);
+			}
+		} catch (final Throwable failure) {
+			future.completeExceptionally(failure);
 		}
+		return future;
 	}
 }

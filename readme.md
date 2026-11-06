@@ -281,10 +281,16 @@ whose module load or enable fails does not call its successful startup hook.
 Component interceptors run before decorator handlers are constructed. A discarded component is never bound in Guice.
 Only components admitted at `ENABLE` receive component handler disable callbacks. Lifecycle callbacks run once per
 plugin instance; module registration and loading are rejected after loading or shutdown.
+Legacy processor modules also disable only components enabled by their conditions, in reverse registration order.
+Legacy Guice providers can implement other interfaces or inherit their `Provider<T>` contract through a generic base.
 
 For global Adventure formatting extensions, `ComponentUtils.registerGlobalTagResolver`,
 `registerComponentResolver`, and `registerComponentModifier` return registrations that can be closed during plugin
 disable. Resolver overrides should be closed in reverse registration order so the previous resolver is restored.
+
+`TimeUnit` delegates standard temporal operations to `ChronoUnit`; `TICKS` represents 50 milliseconds. `toTicks`
+truncates fractional ticks toward zero and throws on a result outside the `long` range.
+`PaperPluginScheduler.getSync` reports supplier and scheduling failures through its returned future.
 
 `@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` now use this component-wide
 pipeline. The old `ServiceDecorator` API remains available for binary migration.

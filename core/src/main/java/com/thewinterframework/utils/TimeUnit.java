@@ -24,7 +24,9 @@
  */
 package com.thewinterframework.utils;
 
+import java.math.BigInteger;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalField;
 import java.time.temporal.TemporalUnit;
@@ -46,6 +48,7 @@ import java.time.temporal.TemporalUnit;
  *
  */
 public enum TimeUnit implements TemporalUnit {
+
 
 	/**
 	 * Unit that represents the concept of a tick, the time unit used by Minecraft.
@@ -166,6 +169,8 @@ public enum TimeUnit implements TemporalUnit {
 
 	private final String name;
 	private final Duration duration;
+	private static final BigInteger NANOS_PER_SECOND = BigInteger.valueOf(1_000_000_000L);
+	private static final BigInteger NANOS_PER_TICK = BigInteger.valueOf(50_000_000L);
 
 	TimeUnit(final String name, final Duration estimatedDuration) {
 		this.name = name;
@@ -187,7 +192,10 @@ public enum TimeUnit implements TemporalUnit {
 	}
 
 	public long toTicks(final long amount) {
-		return (amount * duration.toMillis()) / 50;
+		final var nanos = BigInteger.valueOf(duration.getSeconds())
+				.multiply(NANOS_PER_SECOND)
+				.add(BigInteger.valueOf(duration.getNano()));
+		return nanos.multiply(BigInteger.valueOf(amount)).divide(NANOS_PER_TICK).longValueExact();
 	}
 
 	/**
@@ -236,19 +244,25 @@ public enum TimeUnit implements TemporalUnit {
 	//-----------------------------------------------------------------------
 	@Override
 	public boolean isSupportedBy(final Temporal temporal) {
-		return temporal.isSupported(this);
+		return temporal.isSupported(this == TICKS ? ChronoUnit.MILLIS : ChronoUnit.valueOf(name()));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <R extends Temporal> R addTo(final R temporal, final long amount) {
-		return (R) temporal.plus(amount, this);
+		if (this == TICKS) {
+			return (R) temporal.plus(Math.multiplyExact(amount, 50), ChronoUnit.MILLIS);
+		}
+		return (R) temporal.plus(amount, ChronoUnit.valueOf(name()));
 	}
 
 	//-----------------------------------------------------------------------
 	@Override
 	public long between(final Temporal temporal1Inclusive, final Temporal temporal2Exclusive) {
-		return temporal1Inclusive.until(temporal2Exclusive, this);
+		if (this == TICKS) {
+			return ChronoUnit.MILLIS.between(temporal1Inclusive, temporal2Exclusive) / 50;
+		}
+		return ChronoUnit.valueOf(name()).between(temporal1Inclusive, temporal2Exclusive);
 	}
 
 	//-----------------------------------------------------------------------

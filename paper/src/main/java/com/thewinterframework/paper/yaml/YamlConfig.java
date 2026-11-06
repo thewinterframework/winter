@@ -47,7 +47,11 @@ public final class YamlConfig extends YamlConfiguration {
 	public void load() {
 		if (!Files.exists(path) && resource != null) {
 			createParentDirs();
-			try (final var input = resource.get()) {
+			final var defaultResource = resource.get();
+			if (defaultResource == null) {
+				throw new IllegalStateException("Default YAML resource is missing for " + path);
+			}
+			try (final var input = defaultResource) {
 				Files.copy(input, path);
 			} catch (final IOException e) {
 				throw new IllegalStateException("Failed to copy default configuration from resource to " + path, e);
@@ -92,7 +96,7 @@ public final class YamlConfig extends YamlConfiguration {
 		try {
 			final var parent = path.getParent();
 			if (parent != null) {
-				Files.createDirectories(path.getParent());
+				Files.createDirectories(parent);
 				if (!Files.isDirectory(parent)) {
 					throw new IllegalStateException("Unable to create parent directories for " + path);
 				}
