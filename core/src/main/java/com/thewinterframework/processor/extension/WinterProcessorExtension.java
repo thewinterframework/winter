@@ -16,27 +16,27 @@ import java.util.Set;
  */
 public interface WinterProcessorExtension {
 
-	Set<String> supportedAnnotationNames();
+  Set<String> supportedAnnotationNames();
 
-	default int order() {
-		return 0;
-	}
+  default int order() {
+    return 0;
+  }
 
-	default void initialize(final ProcessingEnvironment environment) {
-	}
+  default void initialize(final ProcessingEnvironment environment) {
+  }
 
-	default void onRoundStarted(final ProcessorContext context) {
-	}
+  default void onRoundStarted(final ProcessorContext context) {
+  }
 
-	void process(
-			TypeElement annotation,
-			Set<? extends Element> elements,
-			ProcessorContext context
-	);
+  void process(
+      TypeElement annotation,
+      Set<? extends Element> elements,
+      ProcessorContext context
+  );
 
-	default void onRoundFinished(final ProcessorContext context) {
-	}
+  default void onRoundFinished(final ProcessorContext context) {
+  }
 
-	default void onProcessingFinished(final ProcessorContext context) {
-	}
+  default void onProcessingFinished(final ProcessorContext context) {
+  }
 }

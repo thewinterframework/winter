@@ -8,12 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class TemplateBuilderTest {
 
-	@Test
-	void rendersLiteralLoopIdentifiersThroughFluentBuilder() {
-		final var result = TemplateBuilder.fromString("<EACH_list.items><VALUE></EACH_list.items>")
-				.withEach("list.items", List.of("a", "b"), (each, value) -> each.add("VALUE", value))
-				.render();
+  @Test
+  void rendersLiteralLoopIdentifiersThroughFluentBuilder() {
+    final var result = TemplateBuilder.fromString("<EACH_list.items><VALUE></EACH_list.items>")
+        .withEach("list.items", List.of("a", "b"), (each, value) -> each.add("VALUE", value))
+        .render();
 
-		assertEquals("ab", result);
-	}
+    assertEquals("ab", result);
+  }
 }

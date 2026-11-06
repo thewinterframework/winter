@@ -19,54 +19,54 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ComponentDescriptorTest {
 
-	@Test
-	void resolvesAComposedComponentAnnotation() {
-		final var descriptor = ComponentDescriptor.from(ExternalAddon.class);
+  @Test
+  void resolvesAComposedComponentAnnotation() {
+    final var descriptor = ComponentDescriptor.from(ExternalAddon.class);
 
-		assertEquals(ComponentScope.EXTERNAL, descriptor.scope());
-		assertEquals(42, descriptor.order());
-		assertTrue(descriptor.async());
-		assertEquals(TestHandler.class, descriptor.handlers().getFirst());
-		assertEquals(TestInterceptor.class, descriptor.interceptors().getFirst());
-	}
+    assertEquals(ComponentScope.EXTERNAL, descriptor.scope());
+    assertEquals(42, descriptor.order());
+    assertTrue(descriptor.async());
+    assertEquals(TestHandler.class, descriptor.handlers().getFirst());
+    assertEquals(TestInterceptor.class, descriptor.interceptors().getFirst());
+  }
 
-	@Test
-	void copiesMutableMetadataLists() {
-		final var dependencies = new ArrayList<Class<?>>();
-		final var descriptor = new ComponentDescriptor(
-				ExternalAddon.class,
-				ComponentScope.EXTERNAL,
-				0,
-				dependencies,
-				List.of(),
-				false,
-				List.of(),
-				List.of()
-		);
-		dependencies.add(TestHandler.class);
+  @Test
+  void copiesMutableMetadataLists() {
+    final var dependencies = new ArrayList<Class<?>>();
+    final var descriptor = new ComponentDescriptor(
+        ExternalAddon.class,
+        ComponentScope.EXTERNAL,
+        0,
+        dependencies,
+        List.of(),
+        false,
+        List.of(),
+        List.of()
+    );
+    dependencies.add(TestHandler.class);
 
-		assertTrue(descriptor.after().isEmpty());
-	}
+    assertTrue(descriptor.after().isEmpty());
+  }
 
-	@Component(
-			scope = ComponentScope.EXTERNAL,
-			order = 42,
-			async = true,
-			handlers = TestHandler.class,
-			interceptors = TestInterceptor.class
-	)
-	@Target(ElementType.TYPE)
-	@Retention(RetentionPolicy.RUNTIME)
-	private @interface AddonComponent {
-	}
+  @Component(
+      scope = ComponentScope.EXTERNAL,
+      order = 42,
+      async = true,
+      handlers = TestHandler.class,
+      interceptors = TestInterceptor.class
+  )
+  @Target(ElementType.TYPE)
+  @Retention(RetentionPolicy.RUNTIME)
+  private @interface AddonComponent {
+  }
 
-	@AddonComponent
-	private static final class ExternalAddon {
-	}
+  @AddonComponent
+  private static final class ExternalAddon {
+  }
 
-	public static final class TestHandler implements ComponentHandler {
-	}
+  public static final class TestHandler implements ComponentHandler {
+  }
 
-	public static final class TestInterceptor implements ComponentInterceptor {
-	}
+  public static final class TestInterceptor implements ComponentInterceptor {
+  }
 }

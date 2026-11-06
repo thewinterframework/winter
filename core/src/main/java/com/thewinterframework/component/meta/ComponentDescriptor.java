@@ -12,58 +12,58 @@ import java.util.Objects;
 
 /** Immutable runtime metadata for a component. */
 public record ComponentDescriptor(
-		Class<?> type,
-		ComponentScope scope,
-		int order,
-		List<Class<?>> after,
-		List<Class<?>> before,
-		boolean async,
-		List<Class<? extends ComponentHandler>> handlers,
-		List<Class<? extends ComponentInterceptor>> interceptors
+    Class<?> type,
+    ComponentScope scope,
+    int order,
+    List<Class<?>> after,
+    List<Class<?>> before,
+    boolean async,
+    List<Class<? extends ComponentHandler>> handlers,
+    List<Class<? extends ComponentInterceptor>> interceptors
 ) {
 
-	public ComponentDescriptor {
-		Objects.requireNonNull(type, "type");
-		Objects.requireNonNull(scope, "scope");
-		after = List.copyOf(after);
-		before = List.copyOf(before);
-		handlers = List.copyOf(handlers);
-		interceptors = List.copyOf(interceptors);
-	}
+  public ComponentDescriptor {
+    Objects.requireNonNull(type, "type");
+    Objects.requireNonNull(scope, "scope");
+    after = List.copyOf(after);
+    before = List.copyOf(before);
+    handlers = List.copyOf(handlers);
+    interceptors = List.copyOf(interceptors);
+  }
 
-	public static ComponentDescriptor from(final Class<?> type) {
-		final var component = findComponent(type);
-		if (component == null) {
-			throw new IllegalArgumentException(type.getName() + " is not annotated with @Component");
-		}
+  public static ComponentDescriptor from(final Class<?> type) {
+    final var component = findComponent(type);
+    if (component == null) {
+      throw new IllegalArgumentException(type.getName() + " is not annotated with @Component");
+    }
 
-		return new ComponentDescriptor(
-				type,
-				component.scope(),
-				component.order(),
-				List.of(component.after()),
-				List.of(component.before()),
-				component.async(),
-				List.of(component.handlers()),
-				List.of(component.interceptors())
-		);
-	}
+    return new ComponentDescriptor(
+        type,
+        component.scope(),
+        component.order(),
+        List.of(component.after()),
+        List.of(component.before()),
+        component.async(),
+        List.of(component.handlers()),
+        List.of(component.interceptors())
+    );
+  }
 
-	public static boolean isComponent(final Class<?> type) {
-		return findComponent(type) != null;
-	}
+  public static boolean isComponent(final Class<?> type) {
+    return findComponent(type) != null;
+  }
 
-	private static Component findComponent(final Class<?> type) {
-		final var direct = type.getDeclaredAnnotation(Component.class);
-		if (direct != null) {
-			return direct;
-		}
+  private static Component findComponent(final Class<?> type) {
+    final var direct = type.getDeclaredAnnotation(Component.class);
+    if (direct != null) {
+      return direct;
+    }
 
-		return Arrays.stream(type.getDeclaredAnnotations())
-				.map(Annotation::annotationType)
-				.map(annotationType -> annotationType.getDeclaredAnnotation(Component.class))
-				.filter(component -> component != null)
-				.findFirst()
-				.orElse(null);
-	}
+    return Arrays.stream(type.getDeclaredAnnotations())
+        .map(Annotation::annotationType)
+        .map(annotationType -> annotationType.getDeclaredAnnotation(Component.class))
+        .filter(component -> component != null)
+        .findFirst()
+        .orElse(null);
+  }
 }

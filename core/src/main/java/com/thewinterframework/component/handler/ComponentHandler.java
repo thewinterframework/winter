@@ -13,23 +13,23 @@ import java.util.Collection;
  */
 public interface ComponentHandler {
 
-	default int order() {
-		return 0;
-	}
+  default int order() {
+    return 0;
+  }
 
-	default boolean supports(final Class<?> componentType) {
-		return false;
-	}
+  default boolean supports(final Class<?> componentType) {
+    return false;
+  }
 
-	default void configure(final Binder binder, final Collection<ComponentDescriptor> components) {
-	}
+  default void configure(final Binder binder, final Collection<ComponentDescriptor> components) {
+  }
 
-	default void onLoad(final ComponentContext context) throws Exception {
-	}
+  default void onLoad(final ComponentContext context) throws Exception {
+  }
 
-	default void onEnable(final ComponentContext context) throws Exception {
-	}
+  default void onEnable(final ComponentContext context) throws Exception {
+  }
 
-	default void onDisable(final ComponentContext context) throws Exception {
-	}
+  default void onDisable(final ComponentContext context) throws Exception {
+  }
 }

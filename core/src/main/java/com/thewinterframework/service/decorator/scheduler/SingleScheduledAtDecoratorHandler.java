@@ -10,23 +10,23 @@ import java.util.List;
 /** Handles the non-container form of a repeatable {@link ScheduledAt} annotation. */
 public final class SingleScheduledAtDecoratorHandler extends SchedulerDecoratorHandler<ScheduledAt> {
 
-	@Override
-	protected SchedulerMethod map(
-			final Class<?> component,
-			final ScheduledAt annotation,
-			final AnnotatedMethodHandle<ScheduledAt> method
-	) {
-		final var schedule = new ScheduledAtMethod.ScheduledAtTime(
-				annotation.hour(),
-				annotation.minute(),
-				annotation.second(),
-				annotation.async()
-		);
-		return new ScheduledAtMethod(component, method, List.of(schedule));
-	}
+  @Override
+  protected SchedulerMethod map(
+      final Class<?> component,
+      final ScheduledAt annotation,
+      final AnnotatedMethodHandle<ScheduledAt> method
+  ) {
+    final var schedule = new ScheduledAtMethod.ScheduledAtTime(
+        annotation.hour(),
+        annotation.minute(),
+        annotation.second(),
+        annotation.async()
+    );
+    return new ScheduledAtMethod(component, method, List.of(schedule));
+  }
 
-	@Override
-	public Class<ScheduledAt> getAnnotationType() {
-		return ScheduledAt.class;
-	}
+  @Override
+  public Class<ScheduledAt> getAnnotationType() {
+    return ScheduledAt.class;
+  }
 }

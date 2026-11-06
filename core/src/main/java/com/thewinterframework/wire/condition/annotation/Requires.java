@@ -10,5 +10,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.ANNOTATION_TYPE) // Importante: Se aplica sobre otras anotaciones
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Requires {
-	Class<? extends ComponentCondition> value();
+  Class<? extends ComponentCondition> value();
 }

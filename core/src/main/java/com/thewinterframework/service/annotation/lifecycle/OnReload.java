@@ -15,15 +15,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ComponentDecorator(OnReloadDecoratorHandler.class)
 public @interface OnReload {
-	/**
-	 * The priority of this method. The higher the priority, the earlier it will be executed
-	 * @return The priority of this method
-	 */
-	Class<?>[] after() default {};
+  /**
+   * The priority of this method. The higher the priority, the earlier it will be executed
+   * @return The priority of this method
+   */
+  Class<?>[] after() default {};
 
-	/**
-	 * The priority of this method. The higher the priority, the earlier it will be executed
-	 * @return The priority of this method
-	 */
-	Class<?>[] before() default {};
+  /**
+   * The priority of this method. The higher the priority, the earlier it will be executed
+   * @return The priority of this method
+   */
+  Class<?>[] before() default {};
 }

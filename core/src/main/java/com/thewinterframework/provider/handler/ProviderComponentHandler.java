@@ -15,28 +15,28 @@ import java.util.Collection;
 @AutoService(ComponentHandler.class)
 public final class ProviderComponentHandler implements ComponentHandler {
 
-	@Override
-	public boolean supports(final Class<?> componentType) {
-		return Provider.class.isAssignableFrom(componentType);
-	}
+  @Override
+  public boolean supports(final Class<?> componentType) {
+    return Provider.class.isAssignableFrom(componentType);
+  }
 
-	@Override
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public void configure(final Binder binder, final Collection<ComponentDescriptor> components) {
-		for (final var component : components) {
-			final var providerType = (Class<? extends Provider<?>>) component.type();
-			final var providedType = resolveProvidedType(providerType);
-			binder.bind((TypeLiteral) TypeLiteral.get(providedType)).toProvider((Class) providerType);
-		}
-	}
+  @Override
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  public void configure(final Binder binder, final Collection<ComponentDescriptor> components) {
+    for (final var component : components) {
+      final var providerType = (Class<? extends Provider<?>>) component.type();
+      final var providedType = resolveProvidedType(providerType);
+      binder.bind((TypeLiteral) TypeLiteral.get(providedType)).toProvider((Class) providerType);
+    }
+  }
 
-	private Type resolveProvidedType(final Class<? extends Provider<?>> providerType) {
-		for (final var candidate : providerType.getGenericInterfaces()) {
-			if (candidate instanceof final ParameterizedType parameterized
-					&& parameterized.getRawType().equals(Provider.class)) {
-				return parameterized.getActualTypeArguments()[0];
-			}
-		}
-		throw new IllegalStateException(providerType.getName() + " must declare Provider<T> directly");
-	}
+  private Type resolveProvidedType(final Class<? extends Provider<?>> providerType) {
+    for (final var candidate : providerType.getGenericInterfaces()) {
+      if (candidate instanceof final ParameterizedType parameterized
+          && parameterized.getRawType().equals(Provider.class)) {
+        return parameterized.getActualTypeArguments()[0];
+      }
+    }
+    throw new IllegalStateException(providerType.getName() + " must declare Provider<T> directly");
+  }
 }

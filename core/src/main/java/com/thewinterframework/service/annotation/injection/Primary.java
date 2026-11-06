@@ -12,5 +12,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @ComponentDecorator(PrimaryHandler.class)
 public @interface Primary {
-	Class<?> value() default Void.class;
+  Class<?> value() default Void.class;
 }

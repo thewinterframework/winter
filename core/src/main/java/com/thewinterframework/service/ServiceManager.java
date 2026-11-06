@@ -19,32 +19,32 @@ import java.util.stream.Collectors;
 @Deprecated(forRemoval = false)
 public class ServiceManager extends ComponentManager {
 
-	public void registerService(final @NotNull Class<?> service) throws ReflectiveOperationException {
-		registerComponent(ComponentDescriptor.from(service));
-	}
+  public void registerService(final @NotNull Class<?> service) throws ReflectiveOperationException {
+    registerComponent(ComponentDescriptor.from(service));
+  }
 
-	public void loadHandlers(final WinterPlugin plugin) {
-		loadDecorators(plugin);
-	}
+  public void loadHandlers(final WinterPlugin plugin) {
+    loadDecorators(plugin);
+  }
 
-	public void configureHandlers(final Binder binder) {
-		configureDecorators(binder);
-	}
+  public void configureHandlers(final Binder binder) {
+    configureDecorators(binder);
+  }
 
-	public void startHandlers(final WinterPlugin plugin) {
-		enableDecorators(plugin);
-	}
+  public void startHandlers(final WinterPlugin plugin) {
+    enableDecorators(plugin);
+  }
 
-	public void stopHandlers(final WinterPlugin plugin) {
-		disableDecorators(plugin);
-	}
+  public void stopHandlers(final WinterPlugin plugin) {
+    disableDecorators(plugin);
+  }
 
-	@Nullable
-	public <T extends ServiceDecoratorHandler<?>> T getHandler(final Class<T> handlerType) {
-		return getDecorator(handlerType);
-	}
+  @Nullable
+  public <T extends ServiceDecoratorHandler<?>> T getHandler(final Class<T> handlerType) {
+    return getDecorator(handlerType);
+  }
 
-	public Set<Class<?>> services() {
-		return components().stream().map(ComponentDescriptor::type).collect(Collectors.toUnmodifiableSet());
-	}
+  public Set<Class<?>> services() {
+    return components().stream().map(ComponentDescriptor::type).collect(Collectors.toUnmodifiableSet());
+  }
 }

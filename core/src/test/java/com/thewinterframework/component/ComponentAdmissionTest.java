@@ -22,89 +22,89 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ComponentAdmissionTest {
 
-	@BeforeEach
-	void resetDiscoveries() {
-		RejectingDecorator.discoveries = 0;
-		RejectingDecorator.constructions = 0;
-	}
+  @BeforeEach
+  void resetDiscoveries() {
+    RejectingDecorator.discoveries = 0;
+    RejectingDecorator.constructions = 0;
+  }
 
-	@Test
-	void interceptorCanDiscardComponentBeforeRegistration() throws Exception {
-		final var manager = new ComponentManager();
-		final var descriptor = ComponentDescriptor.from(InterceptedComponent.class);
+  @Test
+  void interceptorCanDiscardComponentBeforeRegistration() throws Exception {
+    final var manager = new ComponentManager();
+    final var descriptor = ComponentDescriptor.from(InterceptedComponent.class);
 
-		final var registered = manager.registerComponent(
-				new ComponentContext(null, descriptor),
-				List.of(new RejectingInterceptor())
-		);
+    final var registered = manager.registerComponent(
+        new ComponentContext(null, descriptor),
+        List.of(new RejectingInterceptor())
+    );
 
-		assertFalse(registered);
-		assertEquals(0, manager.components().size());
-		assertEquals(0, RejectingDecorator.constructions);
-	}
+    assertFalse(registered);
+    assertEquals(0, manager.components().size());
+    assertEquals(0, RejectingDecorator.constructions);
+  }
 
-	@Test
-	void decoratorCanDiscardComponentBeforeDiscovery() throws Exception {
-		final var manager = new ComponentManager();
-		final var descriptor = ComponentDescriptor.from(DecoratedComponent.class);
+  @Test
+  void decoratorCanDiscardComponentBeforeDiscovery() throws Exception {
+    final var manager = new ComponentManager();
+    final var descriptor = ComponentDescriptor.from(DecoratedComponent.class);
 
-		final var registered = manager.registerComponent(
-				new ComponentContext(null, descriptor),
-				List.of()
-		);
+    final var registered = manager.registerComponent(
+        new ComponentContext(null, descriptor),
+        List.of()
+    );
 
-		assertFalse(registered);
-		assertEquals(0, RejectingDecorator.discoveries);
-		assertEquals(0, manager.components().size());
-		assertNull(manager.getDecorator(RejectingDecorator.class));
-	}
+    assertFalse(registered);
+    assertEquals(0, RejectingDecorator.discoveries);
+    assertEquals(0, manager.components().size());
+    assertNull(manager.getDecorator(RejectingDecorator.class));
+  }
 
-	private static final class RejectingInterceptor implements ComponentInterceptor {
+  private static final class RejectingInterceptor implements ComponentInterceptor {
 
-		@Override
-		public ComponentDecision decide(final ComponentContext context) {
-			return ComponentDecision.DISCARD;
-		}
-	}
+    @Override
+    public ComponentDecision decide(final ComponentContext context) {
+      return ComponentDecision.DISCARD;
+    }
+  }
 
-	@Target(ElementType.TYPE)
-	@Retention(RetentionPolicy.RUNTIME)
-	@ComponentDecorator(RejectingDecorator.class)
-	private @interface Rejected {
-	}
+  @Target(ElementType.TYPE)
+  @Retention(RetentionPolicy.RUNTIME)
+  @ComponentDecorator(RejectingDecorator.class)
+  private @interface Rejected {
+  }
 
-	static final class RejectingDecorator implements ComponentDecoratorHandler<Rejected> {
+  static final class RejectingDecorator implements ComponentDecoratorHandler<Rejected> {
 
-		private static int discoveries;
-		private static int constructions;
+    private static int discoveries;
+    private static int constructions;
 
-		RejectingDecorator() {
-			constructions++;
-		}
+    RejectingDecorator() {
+      constructions++;
+    }
 
-		@Override
-		public Class<Rejected> getAnnotationType() {
-			return Rejected.class;
-		}
+    @Override
+    public Class<Rejected> getAnnotationType() {
+      return Rejected.class;
+    }
 
-		@Override
-		public ComponentDecision decide(final ComponentContext context) {
-			return ComponentDecision.DISCARD;
-		}
+    @Override
+    public ComponentDecision decide(final ComponentContext context) {
+      return ComponentDecision.DISCARD;
+    }
 
-		@Override
-		public void onDiscoverOnType(final Class<?> component, final Rejected annotation) {
-			discoveries++;
-		}
-	}
+    @Override
+    public void onDiscoverOnType(final Class<?> component, final Rejected annotation) {
+      discoveries++;
+    }
+  }
 
-	@Component(interceptors = RejectingInterceptor.class)
-	@Rejected
-	private static final class InterceptedComponent {
-	}
+  @Component(interceptors = RejectingInterceptor.class)
+  @Rejected
+  private static final class InterceptedComponent {
+  }
 
-	@Component
-	@Rejected
-	private static final class DecoratedComponent {
-	}
+  @Component
+  @Rejected
+  private static final class DecoratedComponent {
+  }
 }

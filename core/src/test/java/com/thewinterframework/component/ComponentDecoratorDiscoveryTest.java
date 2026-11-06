@@ -15,25 +15,25 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ComponentDecoratorDiscoveryTest {
 
-	@Test
-	void discoversLifecycleAndSingleScheduleDecoratorsOnAnyComponent() throws Exception {
-		final var manager = new ComponentManager();
-		final var descriptor = ComponentDescriptor.from(DecoratedComponent.class);
-		manager.registerComponent(new ComponentContext(null, descriptor), List.of());
+  @Test
+  void discoversLifecycleAndSingleScheduleDecoratorsOnAnyComponent() throws Exception {
+    final var manager = new ComponentManager();
+    final var descriptor = ComponentDescriptor.from(DecoratedComponent.class);
+    manager.registerComponent(new ComponentContext(null, descriptor), List.of());
 
-		assertNotNull(manager.getDecorator(OnEnableDecoratorHandler.class));
-		assertNotNull(manager.getDecorator(SingleScheduledAtDecoratorHandler.class));
-	}
+    assertNotNull(manager.getDecorator(OnEnableDecoratorHandler.class));
+    assertNotNull(manager.getDecorator(SingleScheduledAtDecoratorHandler.class));
+  }
 
-	@Component
-	private static final class DecoratedComponent {
+  @Component
+  private static final class DecoratedComponent {
 
-		@OnEnable
-		void enable() {
-		}
+    @OnEnable
+    void enable() {
+    }
 
-		@ScheduledAt(hour = "12")
-		void schedule() {
-		}
-	}
+    @ScheduledAt(hour = "12")
+    void schedule() {
+    }
+  }
 }

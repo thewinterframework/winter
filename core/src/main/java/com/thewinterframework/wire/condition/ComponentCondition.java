@@ -7,7 +7,7 @@ import java.lang.annotation.Annotation;
 
 public interface ComponentCondition {
 
-	Stage getStage();
+  Stage getStage();
 
-	boolean matches(final ConditionContext context, final Annotation annotation);
+  boolean matches(final ConditionContext context, final Annotation annotation);
 }

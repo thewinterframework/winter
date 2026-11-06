@@ -20,169 +20,169 @@ import java.util.List;
  */
 public class Reflections {
 
-	/**
-	 * Finds all methods in a class that are annotated with a specific annotation,
-	 * or with an annotation that is itself annotated with that annotation (meta-annotation).
-	 *
-	 * @param clazz      The class to search in.
-	 * @param annotation The annotation or meta-annotation to search for.
-	 * @param <T>        The annotation type.
-	 * @return A list of annotated method handles.
-	 * @throws IllegalAccessException If the method cannot be accessed.
-	 * @throws NoSuchMethodException  If the method does not exist.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(final Class<?> clazz, final Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
-		final var list = new ArrayList<AnnotatedMethodHandle<T>>();
+  /**
+   * Finds all methods in a class that are annotated with a specific annotation,
+   * or with an annotation that is itself annotated with that annotation (meta-annotation).
+   *
+   * @param clazz      The class to search in.
+   * @param annotation The annotation or meta-annotation to search for.
+   * @param <T>        The annotation type.
+   * @return A list of annotated method handles.
+   * @throws IllegalAccessException If the method cannot be accessed.
+   * @throws NoSuchMethodException  If the method does not exist.
+   */
+  @SuppressWarnings("unchecked")
+  public static <T extends Annotation> List<AnnotatedMethodHandle<T>> findMethodsWith(final Class<?> clazz, final Class<T> annotation) throws IllegalAccessException, NoSuchMethodException {
+    final var list = new ArrayList<AnnotatedMethodHandle<T>>();
 
-		for (final var method : clazz.getDeclaredMethods()) {
-			for (final var methodAnnotation : method.getDeclaredAnnotations()) {
-				final var annotationType = methodAnnotation.annotationType();
+    for (final var method : clazz.getDeclaredMethods()) {
+      for (final var methodAnnotation : method.getDeclaredAnnotations()) {
+        final var annotationType = methodAnnotation.annotationType();
 
-				if (annotationType.equals(annotation)) {
-					list.add(new AnnotatedMethodHandle<>(
-							method,
-							MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
-									.findVirtual(clazz, method.getName(),
-											MethodType.methodType(method.getReturnType(), method.getParameterTypes())),
-							(T) annotationType.cast(methodAnnotation),
-							findMethodParameters(method)
-					));
-					continue;
-				}
+        if (annotationType.equals(annotation)) {
+          list.add(new AnnotatedMethodHandle<>(
+              method,
+              MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+                  .findVirtual(clazz, method.getName(),
+                      MethodType.methodType(method.getReturnType(), method.getParameterTypes())),
+              (T) annotationType.cast(methodAnnotation),
+              findMethodParameters(method)
+          ));
+          continue;
+        }
 
-				if (annotationType.isAnnotationPresent(annotation)) {
-					list.add(new AnnotatedMethodHandle<>(
-							method,
-							MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
-									.findVirtual(clazz, method.getName(),
-											MethodType.methodType(method.getReturnType(), method.getParameterTypes())),
-							annotationType.getAnnotation(annotation),
-							findMethodParameters(method)
-					));
-				}
-			}
-		}
+        if (annotationType.isAnnotationPresent(annotation)) {
+          list.add(new AnnotatedMethodHandle<>(
+              method,
+              MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
+                  .findVirtual(clazz, method.getName(),
+                      MethodType.methodType(method.getReturnType(), method.getParameterTypes())),
+              annotationType.getAnnotation(annotation),
+              findMethodParameters(method)
+          ));
+        }
+      }
+    }
 
-		return list;
-	}
+    return list;
+  }
 
-	/**
-	 * Finds all annotations of a class that are annotated with a specific meta-annotation.
-	 *
-	 * @param clazz          The class to get the annotations from.
-	 * @param metaAnnotation The meta-annotation to get the annotations from.
-	 * @param <T>            The annotation type.
-	 * @return The annotations.
-	 */
-	public static <T extends Annotation> List<Annotation> findClassAnnotations(final Class<?> clazz, final Class<T> metaAnnotation) {
-		final var list = new ArrayList<Annotation>();
+  /**
+   * Finds all annotations of a class that are annotated with a specific meta-annotation.
+   *
+   * @param clazz          The class to get the annotations from.
+   * @param metaAnnotation The meta-annotation to get the annotations from.
+   * @param <T>            The annotation type.
+   * @return The annotations.
+   */
+  public static <T extends Annotation> List<Annotation> findClassAnnotations(final Class<?> clazz, final Class<T> metaAnnotation) {
+    final var list = new ArrayList<Annotation>();
 
-		for (final var annotation : clazz.getAnnotations()) {
-			if (annotation.annotationType().isAnnotationPresent(metaAnnotation)) {
-				list.add(annotation);
-			}
-		}
+    for (final var annotation : clazz.getAnnotations()) {
+      if (annotation.annotationType().isAnnotationPresent(metaAnnotation)) {
+        list.add(annotation);
+      }
+    }
 
-		return list;
-	}
+    return list;
+  }
 
-	/**
-	 * Finds the parameters of a method.
-	 *
-	 * @param method The method to find the parameters of.
-	 * @return A list of keys representing the parameters.
-	 */
-	public static List<Key<?>> findMethodParameters(final Method method) {
-		final var parameters = method.getGenericParameterTypes();
-		final var typeParameters = method.getParameters();
-		final var keys = new ArrayList<Key<?>>();
+  /**
+   * Finds the parameters of a method.
+   *
+   * @param method The method to find the parameters of.
+   * @return A list of keys representing the parameters.
+   */
+  public static List<Key<?>> findMethodParameters(final Method method) {
+    final var parameters = method.getGenericParameterTypes();
+    final var typeParameters = method.getParameters();
+    final var keys = new ArrayList<Key<?>>();
 
-		for (var i = 0; i < parameters.length; i++) {
-			final var untypedParameter = typeParameters[i];
-			final var typedParameter = parameters[i];
+    for (var i = 0; i < parameters.length; i++) {
+      final var untypedParameter = typeParameters[i];
+      final var typedParameter = parameters[i];
 
-			if (untypedParameter.getAnnotations().length != 0) {
-				final var bindingAnnotation = findBindingAnnotation(untypedParameter);
-				if (bindingAnnotation != null) {
-					keys.add(Key.get(typedParameter, bindingAnnotation));
-					continue;
-				}
-			}
+      if (untypedParameter.getAnnotations().length != 0) {
+        final var bindingAnnotation = findBindingAnnotation(untypedParameter);
+        if (bindingAnnotation != null) {
+          keys.add(Key.get(typedParameter, bindingAnnotation));
+          continue;
+        }
+      }
 
-			keys.add(Key.get(typedParameter));
-		}
+      keys.add(Key.get(typedParameter));
+    }
 
-		return keys;
-	}
+    return keys;
+  }
 
-	/**
-	 * Injects the keys into the injector and returns the objects.
-	 *
-	 * @param instance The instance to inject the keys into.
-	 * @param keys     The keys to inject.
-	 * @param injector The injector to get the instances from.
-	 * @return The objects.
-	 */
-	public static Object[] injectKeys(final Class<?> instance, final List<Key<?>> keys, final Injector injector) {
-		final var objects = new Object[keys.size() + 1];
-		objects[0] = injector.getInstance(instance);
-		for (var i = 0; i < keys.size(); i++) {
-			objects[i + 1] = injector.getInstance(keys.get(i));
-		}
-		return objects;
-	}
+  /**
+   * Injects the keys into the injector and returns the objects.
+   *
+   * @param instance The instance to inject the keys into.
+   * @param keys     The keys to inject.
+   * @param injector The injector to get the instances from.
+   * @return The objects.
+   */
+  public static Object[] injectKeys(final Class<?> instance, final List<Key<?>> keys, final Injector injector) {
+    final var objects = new Object[keys.size() + 1];
+    objects[0] = injector.getInstance(instance);
+    for (var i = 0; i < keys.size(); i++) {
+      objects[i + 1] = injector.getInstance(keys.get(i));
+    }
+    return objects;
+  }
 
-	/**
-	 * Gets the generic type of class that implements an interface.
-	 *
-	 * @param clazz     The class to get the generic type from.
-	 * @param interfaze The interface to get the generic type from.
-	 * @param index     The index of the generic type.
-	 * @return The generic type.
-	 */
-	public static Type getGenericType(final Class<?> clazz, final Class<?> interfaze, final int index) {
-		for (final var type : clazz.getGenericInterfaces()) {
-			if (type instanceof final ParameterizedType parameterizedType) {
-				final var rawType = parameterizedType.getRawType();
-				if (rawType instanceof Class<?> && interfaze.isAssignableFrom((Class<?>) rawType)) {
-					return parameterizedType.getActualTypeArguments()[index];
-				}
-			}
-		}
-		return null;
-	}
+  /**
+   * Gets the generic type of class that implements an interface.
+   *
+   * @param clazz     The class to get the generic type from.
+   * @param interfaze The interface to get the generic type from.
+   * @param index     The index of the generic type.
+   * @return The generic type.
+   */
+  public static Type getGenericType(final Class<?> clazz, final Class<?> interfaze, final int index) {
+    for (final var type : clazz.getGenericInterfaces()) {
+      if (type instanceof final ParameterizedType parameterizedType) {
+        final var rawType = parameterizedType.getRawType();
+        if (rawType instanceof Class<?> && interfaze.isAssignableFrom((Class<?>) rawType)) {
+          return parameterizedType.getActualTypeArguments()[index];
+        }
+      }
+    }
+    return null;
+  }
 
-	/**
-	 * Converts a type to a class.
-	 *
-	 * @param type The type to convert.
-	 * @return The class.
-	 */
-	public static Class<?> toClass(final Type type) {
-		if (type instanceof Class) {
-			return (Class<?>) type;
-		} else if (type instanceof ParameterizedType) {
-			return (Class<?>) ((ParameterizedType) type).getRawType();
-		}
-		throw new IllegalArgumentException("Unsupported type: " + type);
-	}
+  /**
+   * Converts a type to a class.
+   *
+   * @param type The type to convert.
+   * @return The class.
+   */
+  public static Class<?> toClass(final Type type) {
+    if (type instanceof Class) {
+      return (Class<?>) type;
+    } else if (type instanceof ParameterizedType) {
+      return (Class<?>) ((ParameterizedType) type).getRawType();
+    }
+    throw new IllegalArgumentException("Unsupported type: " + type);
+  }
 
-	/**
-	 * Finds the binding annotation of an element.
-	 *
-	 * @param element The element to find the binding annotation of.
-	 * @return The binding annotation.
-	 */
-	public static Annotation findBindingAnnotation(final AnnotatedElement element) {
-		for (final var annotation : element.getAnnotations()) {
-			final var annotationType = annotation.annotationType();
-			if (annotationType.equals(Named.class) || annotationType.isAnnotationPresent(BindingAnnotation.class)) {
-				return annotation;
-			}
-		}
+  /**
+   * Finds the binding annotation of an element.
+   *
+   * @param element The element to find the binding annotation of.
+   * @return The binding annotation.
+   */
+  public static Annotation findBindingAnnotation(final AnnotatedElement element) {
+    for (final var annotation : element.getAnnotations()) {
+      final var annotationType = annotation.annotationType();
+      if (annotationType.equals(Named.class) || annotationType.isAnnotationPresent(BindingAnnotation.class)) {
+        return annotation;
+      }
+    }
 
-		return null;
-	}
+    return null;
+  }
 
 }

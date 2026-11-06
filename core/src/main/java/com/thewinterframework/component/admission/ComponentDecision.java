@@ -5,9 +5,9 @@ package com.thewinterframework.component.admission;
  */
 public enum ComponentDecision {
 
-	/** Continue registering the component. */
-	CONTINUE,
+  /** Continue registering the component. */
+  CONTINUE,
 
-	/** Exclude the component from dependency injection and every lifecycle phase. */
-	DISCARD
+  /** Exclude the component from dependency injection and every lifecycle phase. */
+  DISCARD
 }

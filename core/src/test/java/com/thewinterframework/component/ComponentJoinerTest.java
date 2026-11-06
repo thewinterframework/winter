@@ -9,14 +9,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ComponentJoinerTest {
 
-	@Test
-	void emptyComponentStillCountsAsFirstEntry() {
-		final var joiner = new ComponentJoiner(Component.text(", "));
-		assertTrue(joiner.isEmpty());
+  @Test
+  void emptyComponentStillCountsAsFirstEntry() {
+    final var joiner = new ComponentJoiner(Component.text(", "));
+    assertTrue(joiner.isEmpty());
 
-		joiner.append(Component.empty()).append(Component.text("second"));
+    joiner.append(Component.empty()).append(Component.text("second"));
 
-		assertFalse(joiner.isEmpty());
-		assertEquals(Component.empty().append(Component.text(", ")).append(Component.text("second")), joiner.component());
-	}
+    assertFalse(joiner.isEmpty());
+    assertEquals(Component.empty().append(Component.text(", ")).append(Component.text("second")), joiner.component());
+  }
 }

@@ -8,17 +8,17 @@ import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 import java.util.Arrays;
 
 public class ScheduledAtDecoratorHandler extends SchedulerDecoratorHandler<ScheduledAtContainer> {
-	@Override
-	protected SchedulerMethod map(final Class<?> service, final ScheduledAtContainer annotation, final AnnotatedMethodHandle<ScheduledAtContainer> method) {
-		final var schedules = Arrays.stream(annotation.value())
-				.map(scheduledAt -> new ScheduledAtMethod.ScheduledAtTime(scheduledAt.hour(), scheduledAt.minute(), scheduledAt.second(), scheduledAt.async()))
-				.toList();
+  @Override
+  protected SchedulerMethod map(final Class<?> service, final ScheduledAtContainer annotation, final AnnotatedMethodHandle<ScheduledAtContainer> method) {
+    final var schedules = Arrays.stream(annotation.value())
+        .map(scheduledAt -> new ScheduledAtMethod.ScheduledAtTime(scheduledAt.hour(), scheduledAt.minute(), scheduledAt.second(), scheduledAt.async()))
+        .toList();
 
-		return new ScheduledAtMethod(service, method, schedules);
-	}
+    return new ScheduledAtMethod(service, method, schedules);
+  }
 
-	@Override
-	public Class<ScheduledAtContainer> getAnnotationType() {
-		return ScheduledAtContainer.class;
-	}
+  @Override
+  public Class<ScheduledAtContainer> getAnnotationType() {
+    return ScheduledAtContainer.class;
+  }
 }

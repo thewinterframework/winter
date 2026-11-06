@@ -12,19 +12,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoService(ComponentHandler.class)
 public final class ListenerComponentHandler implements ComponentHandler {
 
-	@Override
-	public boolean supports(final Class<?> componentType) {
-		return Listener.class.isAssignableFrom(componentType);
-	}
+  @Override
+  public boolean supports(final Class<?> componentType) {
+    return Listener.class.isAssignableFrom(componentType);
+  }
 
-	@Override
-	public void onEnable(final ComponentContext context) {
-		final var listener = (Listener) context.instance();
-		Bukkit.getPluginManager().registerEvents(listener, (JavaPlugin) context.plugin());
-	}
+  @Override
+  public void onEnable(final ComponentContext context) {
+    final var listener = (Listener) context.instance();
+    Bukkit.getPluginManager().registerEvents(listener, (JavaPlugin) context.plugin());
+  }
 
-	@Override
-	public void onDisable(final ComponentContext context) {
-		HandlerList.unregisterAll((Listener) context.instance());
-	}
+  @Override
+  public void onDisable(final ComponentContext context) {
+    HandlerList.unregisterAll((Listener) context.instance());
+  }
 }

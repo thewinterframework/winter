@@ -11,37 +11,37 @@ import java.util.Map;
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
 
-	private final Map<Class<?>, Class<?>> bindAsMap = new HashMap<>();
+  private final Map<Class<?>, Class<?>> bindAsMap = new HashMap<>();
 
-	@Override
-	public Class<Primary> getAnnotationType() {
-		return Primary.class;
-	}
+  @Override
+  public Class<Primary> getAnnotationType() {
+    return Primary.class;
+  }
 
-	@Override
-	public void onDiscoverOnType(final Class<?> service, final Primary annotation) {
-		final var superType = annotation.value();
-		if (superType != Void.class) {
-			bindAsMap.put(superType, service);
-			return;
-		}
+  @Override
+  public void onDiscoverOnType(final Class<?> service, final Primary annotation) {
+    final var superType = annotation.value();
+    if (superType != Void.class) {
+      bindAsMap.put(superType, service);
+      return;
+    }
 
-		final var interfaces = service.getInterfaces();
-		if (interfaces.length == 0) {
-			throw new RuntimeException("Service " + service.getName() + " has no interfaces! and is annotated with @Primary");
-		}
+    final var interfaces = service.getInterfaces();
+    if (interfaces.length == 0) {
+      throw new RuntimeException("Service " + service.getName() + " has no interfaces! and is annotated with @Primary");
+    }
 
-		final var firstInterface = interfaces[0];
-		bindAsMap.put(firstInterface, service);
-	}
+    final var firstInterface = interfaces[0];
+    bindAsMap.put(firstInterface, service);
+  }
 
-	@Override
-	public void onConfigure(final Binder binder) {
-		for (final var entry : bindAsMap.entrySet()) {
-			final var superType = (Class) entry.getKey();
-			final var impl = (Class) entry.getValue();
+  @Override
+  public void onConfigure(final Binder binder) {
+    for (final var entry : bindAsMap.entrySet()) {
+      final var superType = (Class) entry.getKey();
+      final var impl = (Class) entry.getValue();
 
-			binder.bind(superType).to(impl).in(Singleton.class);
-		}
-	}
+      binder.bind(superType).to(impl).in(Singleton.class);
+    }
+  }
 }

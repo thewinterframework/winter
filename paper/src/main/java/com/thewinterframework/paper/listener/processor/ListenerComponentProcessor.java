@@ -15,18 +15,18 @@ import java.lang.annotation.Annotation;
  */
 @Deprecated(forRemoval = false)
 public class ListenerComponentProcessor extends ClassWireProcessor {
-	@Override
-	protected Class<? extends Annotation> wiredAnnotation() {
-		return ListenerComponent.class;
-	}
+  @Override
+  protected Class<? extends Annotation> wiredAnnotation() {
+    return ListenerComponent.class;
+  }
 
-	@Override
-	public void onRoundStart(final ProcessorContext ctx) {
-		ctx.wireModule(ListenerModule.class);
-	}
+  @Override
+  public void onRoundStart(final ProcessorContext ctx) {
+    ctx.wireModule(ListenerModule.class);
+  }
 
-	@Override
-	protected boolean filter(final TypeElement annotation, final Element element, final ProcessorContext ctx) {
-		return ProcessorUtils.isChild(element.asType(), "org.bukkit.event.Listener");
-	}
+  @Override
+  protected boolean filter(final TypeElement annotation, final Element element, final ProcessorContext ctx) {
+    return ProcessorUtils.isChild(element.asType(), "org.bukkit.event.Listener");
+  }
 }

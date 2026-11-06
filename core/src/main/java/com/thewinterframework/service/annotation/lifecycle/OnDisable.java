@@ -17,9 +17,9 @@ import java.lang.annotation.Target;
 @ComponentDecorator(OnDisableDecoratorHandler.class)
 public @interface OnDisable {
 
-	/**
-	 * This indicates the priority of the method.
-	 * @return The classes to call before this method
-	 */
-	Class<?>[] before() default {};
+  /**
+   * This indicates the priority of the method.
+   * @return The classes to call before this method
+   */
+  Class<?>[] before() default {};
 }

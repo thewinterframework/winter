@@ -11,20 +11,20 @@ import java.util.List;
 
 public abstract class SchedulerDecoratorHandler<A extends Annotation> implements ServiceDecoratorHandler<A> {
 
-	private final List<SchedulerMethod> registeredMethods = new ArrayList<>();
+  private final List<SchedulerMethod> registeredMethods = new ArrayList<>();
 
-	@Override
-	public void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {
-		final var annotation = method.annotation();
-		registeredMethods.add(map(service, annotation, method));
-	}
+  @Override
+  public void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {
+    final var annotation = method.annotation();
+    registeredMethods.add(map(service, annotation, method));
+  }
 
-	protected abstract SchedulerMethod map(Class<?> service, A annotation, AnnotatedMethodHandle<A> method);
+  protected abstract SchedulerMethod map(Class<?> service, A annotation, AnnotatedMethodHandle<A> method);
 
-	@Override
-	public void onPluginEnable(final WinterPlugin plugin) {
-		for (final var method : registeredMethods) {
-			method.schedule(plugin);
-		}
-	}
+  @Override
+  public void onPluginEnable(final WinterPlugin plugin) {
+    for (final var method : registeredMethods) {
+      method.schedule(plugin);
+    }
+  }
 }

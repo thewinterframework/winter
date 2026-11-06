@@ -7,12 +7,12 @@ import com.thewinterframework.plugin.WinterPlugin;
  */
 public interface SchedulerMethod {
 
-	/**
-	 * Schedules this method to be executed by the plugin.
-	 *
-	 * @param plugin Plugin to schedule this method for
-	 * @return The created schedule
-	 */
-	int schedule(WinterPlugin plugin);
+  /**
+   * Schedules this method to be executed by the plugin.
+   *
+   * @param plugin Plugin to schedule this method for
+   * @return The created schedule
+   */
+  int schedule(WinterPlugin plugin);
 
 }

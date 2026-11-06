@@ -18,26 +18,26 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Component {
 
-	ComponentScope scope() default ComponentScope.LOCAL;
+  ComponentScope scope() default ComponentScope.LOCAL;
 
-	/** Lower values are loaded first when no explicit dependency decides the order. */
-	int order() default 0;
+  /** Lower values are loaded first when no explicit dependency decides the order. */
+  int order() default 0;
 
-	/** Components that must be loaded before this component. */
-	Class<?>[] after() default {};
+  /** Components that must be loaded before this component. */
+  Class<?>[] after() default {};
 
-	/** Components that must be loaded after this component. */
-	Class<?>[] before() default {};
+  /** Components that must be loaded after this component. */
+  Class<?>[] before() default {};
 
-	/**
-	 * Allows lifecycle work for this component to run on a worker thread.
-	 * This is opt-in because most platform APIs are not thread-safe.
-	 */
-	boolean async() default false;
+  /**
+   * Allows lifecycle work for this component to run on a worker thread.
+   * This is opt-in because most platform APIs are not thread-safe.
+   */
+  boolean async() default false;
 
-	/** Additional handlers applied to this component. */
-	Class<? extends ComponentHandler>[] handlers() default {};
+  /** Additional handlers applied to this component. */
+  Class<? extends ComponentHandler>[] handlers() default {};
 
-	/** Lifecycle interceptors applied around this component. */
-	Class<? extends ComponentInterceptor>[] interceptors() default {};
+  /** Lifecycle interceptors applied around this component. */
+  Class<? extends ComponentInterceptor>[] interceptors() default {};
 }

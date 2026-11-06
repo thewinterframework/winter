@@ -14,25 +14,25 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class ListenerModule extends AbstractProcessorModule {
 
-	public ListenerModule() {
-		super(ListenerComponent.class);
-	}
+  public ListenerModule() {
+    super(ListenerComponent.class);
+  }
 
-	@Override
-	public void configure(final Binder binder) {
-	}
+  @Override
+  public void configure(final Binder binder) {
+  }
 
-	@Override
-	protected void enableComponent(final WinterPlugin plugin, final Class<?> componentClass) {
-		final var javaPlugin = (JavaPlugin) plugin;
-		final var listener = (Listener) plugin.getInjector().getInstance(componentClass);
-		Bukkit.getServer().getPluginManager().registerEvents(listener, javaPlugin);
-	}
+  @Override
+  protected void enableComponent(final WinterPlugin plugin, final Class<?> componentClass) {
+    final var javaPlugin = (JavaPlugin) plugin;
+    final var listener = (Listener) plugin.getInjector().getInstance(componentClass);
+    Bukkit.getServer().getPluginManager().registerEvents(listener, javaPlugin);
+  }
 
-	@Override
-	public boolean onDisable(final WinterPlugin plugin) throws Exception {
-		super.onDisable(plugin);
-		HandlerList.unregisterAll((JavaPlugin) plugin);
-		return true;
-	}
+  @Override
+  public boolean onDisable(final WinterPlugin plugin) throws Exception {
+    super.onDisable(plugin);
+    HandlerList.unregisterAll((JavaPlugin) plugin);
+    return true;
+  }
 }

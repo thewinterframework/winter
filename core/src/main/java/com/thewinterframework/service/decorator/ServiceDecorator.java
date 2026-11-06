@@ -12,10 +12,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Deprecated(forRemoval = false)
 public @interface ServiceDecorator {
-	/**
-	 * The handler class that will process the decorator.
-	 *
-	 * @return The handler class.
-	 */
-	Class<? extends ServiceDecoratorHandler<?>> value();
+  /**
+   * The handler class that will process the decorator.
+   *
+   * @return The handler class.
+   */
+  Class<? extends ServiceDecoratorHandler<?>> value();
 }

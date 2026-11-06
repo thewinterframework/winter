@@ -16,18 +16,18 @@ import java.lang.annotation.Annotation;
  */
 public class ModuleComponentAnnotationProcessor extends ClassWireProcessor {
 
-	@Override
-	protected Class<? extends Annotation> wiredAnnotation() {
-		return ModuleComponent.class;
-	}
+  @Override
+  protected Class<? extends Annotation> wiredAnnotation() {
+    return ModuleComponent.class;
+  }
 
-	@Override
-	public void onRoundStart(final ProcessorContext ctx) {
-		ctx.wireModule(PluginComponentModule.class);
-	}
+  @Override
+  public void onRoundStart(final ProcessorContext ctx) {
+    ctx.wireModule(PluginComponentModule.class);
+  }
 
-	@Override
-	protected boolean filter(final TypeElement annotation, final Element element, final ProcessorContext ctx) {
-		return ProcessorUtils.isChild(element.asType(), ProcessorUtils.asElement(env, PluginModule.class).asType());
-	}
+  @Override
+  protected boolean filter(final TypeElement annotation, final Element element, final ProcessorContext ctx) {
+    return ProcessorUtils.isChild(element.asType(), ProcessorUtils.asElement(env, PluginModule.class).asType());
+  }
 }

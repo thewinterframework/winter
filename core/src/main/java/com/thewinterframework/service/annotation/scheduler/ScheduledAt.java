@@ -14,30 +14,30 @@ import java.lang.annotation.*;
 @ComponentDecorator(SingleScheduledAtDecoratorHandler.class)
 public @interface ScheduledAt {
 
-	/**
-	 * The hour of the day to run the task
-	 * @return the hour of the day to run the task
-	 */
-	String hour();
+  /**
+   * The hour of the day to run the task
+   * @return the hour of the day to run the task
+   */
+  String hour();
 
-	/**
-	 * The minute of the hour to run the task
-	 * @return the minute of the hour to run the task
-	 */
-	String minute() default "0";
+  /**
+   * The minute of the hour to run the task
+   * @return the minute of the hour to run the task
+   */
+  String minute() default "0";
 
-	/**
-	 * The second of the minute to run the task
-	 * @return the second of the minute to run the task
-	 */
-	String second() default "0";
+  /**
+   * The second of the minute to run the task
+   * @return the second of the minute to run the task
+   */
+  String second() default "0";
 
-	/**
-	 * Whether the task should be executed asynchronously...
-	 * <p>
-	 * If the method has more than one ScheduledAt annotation, if this is set to true, all annotations will be executed asynchronously.
-	 * @return whether the task should be executed asynchronously
-	 */
-	String async() default "false";
+  /**
+   * Whether the task should be executed asynchronously...
+   * <p>
+   * If the method has more than one ScheduledAt annotation, if this is set to true, all annotations will be executed asynchronously.
+   * @return whether the task should be executed asynchronously
+   */
+  String async() default "false";
 
 }

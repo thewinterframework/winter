@@ -17,28 +17,28 @@ import java.lang.annotation.Target;
 @ComponentDecorator(RepeatingTaskDecoratorHandler.class)
 public @interface RepeatingTask {
 
-	/**
-	 * The interval between each execution of the handle
-	 * @return the interval between each execution of the handle
-	 */
-	String every();
+  /**
+   * The interval between each execution of the handle
+   * @return the interval between each execution of the handle
+   */
+  String every();
 
-	/**
-	 * The delay before the first execution of the handle
-	 * @return the delay before the first execution of the handle
-	 */
-	String delay() default "0";
+  /**
+   * The delay before the first execution of the handle
+   * @return the delay before the first execution of the handle
+   */
+  String delay() default "0";
 
-	/**
-	 * The time unit of the interval
-	 * @return the time unit of the interval
-	 */
-	String unit() default "MILLISECONDS";
+  /**
+   * The time unit of the interval
+   * @return the time unit of the interval
+   */
+  String unit() default "MILLISECONDS";
 
-	/**
-	 * Whether the task should be executed asynchronously
-	 * @return whether the task should be executed asynchronously
-	 */
-	String async() default "false";
+  /**
+   * Whether the task should be executed asynchronously
+   * @return whether the task should be executed asynchronously
+   */
+  String async() default "false";
 
 }

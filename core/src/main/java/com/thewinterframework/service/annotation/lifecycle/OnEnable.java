@@ -16,9 +16,9 @@ import java.lang.annotation.Target;
 @ComponentDecorator(OnEnableDecoratorHandler.class)
 public @interface OnEnable {
 
-	/**
-	 * The priority of this method. The higher the priority, the earlier it will be executed
-	 * @return The priority of this method
-	 */
-	Class<?>[] after() default {};
+  /**
+   * The priority of this method. The higher the priority, the earlier it will be executed
+   * @return The priority of this method
+   */
+  Class<?>[] after() default {};
 }

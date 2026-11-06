@@ -11,14 +11,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class <CLASS_NAME> extends AbstractModule implements ProcessorModule {
 
-	@Override
-	protected void configure() {
-		var plugin = JavaPlugin.getProvidingPlugin(this.getClass());
+  @Override
+  protected void configure() {
+    var plugin = JavaPlugin.getProvidingPlugin(this.getClass());
 
         <el>
-				bind(YamlConfig.class)
-						.annotatedWith(new FileNameImpl("<FILE_NAME>"))
-						.toInstance(YamlConfig.configuration(plugin, "<FILE_NAME>"));
+        bind(YamlConfig.class)
+            .annotatedWith(new FileNameImpl("<FILE_NAME>"))
+            .toInstance(YamlConfig.configuration(plugin, "<FILE_NAME>"));
         </el>
-	}
+  }
 }

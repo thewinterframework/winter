@@ -10,30 +10,30 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.ParameterizedType;
 
 public class ProviderModule extends AbstractProcessorModule {
-	public ProviderModule() {
-		super(ProviderComponent.class);
-	}
+  public ProviderModule() {
+    super(ProviderComponent.class);
+  }
 
-	@Override
-	public void configure(final Binder binder) {
-		for (final var providerClass : this.activeComponents) {
-			bindProvider(binder, (Class<? extends Provider<Object>>) providerClass);
-		}
-		this.activeComponents.clear();
-	}
+  @Override
+  public void configure(final Binder binder) {
+    for (final var providerClass : this.activeComponents) {
+      bindProvider(binder, (Class<? extends Provider<Object>>) providerClass);
+    }
+    this.activeComponents.clear();
+  }
 
-	private static <O, T extends Provider<O>> void bindProvider(final @NotNull Binder binder, final Class<T> providerClass) {
-		final var typeLiteral = resolveTypeLiteral(providerClass);
-		binder.bind(typeLiteral).toProvider(providerClass);
-	}
+  private static <O, T extends Provider<O>> void bindProvider(final @NotNull Binder binder, final Class<T> providerClass) {
+    final var typeLiteral = resolveTypeLiteral(providerClass);
+    binder.bind(typeLiteral).toProvider(providerClass);
+  }
 
-	@SuppressWarnings("unchecked")
-	private static <T> TypeLiteral<T> resolveTypeLiteral(final @NotNull Class<? extends Provider<T>> providerClass) {
-		final var generic = TypeLiteral.get(providerClass).getSupertype(Provider.class).getType();
-		if (!(generic instanceof final ParameterizedType parameterizedType)) {
-			throw new IllegalStateException("Provider is not parameterized");
-		}
-		final var actualType = parameterizedType.getActualTypeArguments()[0];
-		return (TypeLiteral<T>) TypeLiteral.get(actualType);
-	}
+  @SuppressWarnings("unchecked")
+  private static <T> TypeLiteral<T> resolveTypeLiteral(final @NotNull Class<? extends Provider<T>> providerClass) {
+    final var generic = TypeLiteral.get(providerClass).getSupertype(Provider.class).getType();
+    if (!(generic instanceof final ParameterizedType parameterizedType)) {
+      throw new IllegalStateException("Provider is not parameterized");
+    }
+    final var actualType = parameterizedType.getActualTypeArguments()[0];
+    return (TypeLiteral<T>) TypeLiteral.get(actualType);
+  }
 }

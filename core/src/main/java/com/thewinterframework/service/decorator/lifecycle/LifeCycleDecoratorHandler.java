@@ -15,73 +15,73 @@ import java.lang.annotation.Annotation;
 
 public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements ServiceDecoratorHandler<A> {
 
-	protected final Multimap<Class<?>, LifeCycleMethod> lifeCycleMethodsByService = HashMultimap.create();
-	protected final DfsGraph<LifeCycleMethod> graph = new DfsGraph<>();
+  protected final Multimap<Class<?>, LifeCycleMethod> lifeCycleMethodsByService = HashMultimap.create();
+  protected final DfsGraph<LifeCycleMethod> graph = new DfsGraph<>();
 
-	@Override
-	public final void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {
-		final var reflect = new ReflectLifeCycleMethod(service, method, extractBeforeAnnotations(method.annotation()), extractAfterAnnotations(method.annotation()));
-		lifeCycleMethodsByService.put(service, reflect);
-	}
+  @Override
+  public final void onDiscover(final Class<?> service, final AnnotatedMethodHandle<A> method) {
+    final var reflect = new ReflectLifeCycleMethod(service, method, extractBeforeAnnotations(method.annotation()), extractAfterAnnotations(method.annotation()));
+    lifeCycleMethodsByService.put(service, reflect);
+  }
 
-	@Override
-	public final void onPluginLoad(final WinterPlugin plugin) {
-		for (final var entry : lifeCycleMethodsByService.entries()) {
-			final var lifeCycleMethod = entry.getValue();
+  @Override
+  public final void onPluginLoad(final WinterPlugin plugin) {
+    for (final var entry : lifeCycleMethodsByService.entries()) {
+      final var lifeCycleMethod = entry.getValue();
 
-			for (final var beforeService : lifeCycleMethod.before()) {
-				for (final var beforeMethod : lifeCycleMethodsByService.get(beforeService)) {
-					graph.addBefore(lifeCycleMethod, beforeMethod);
-				}
-			}
+      for (final var beforeService : lifeCycleMethod.before()) {
+        for (final var beforeMethod : lifeCycleMethodsByService.get(beforeService)) {
+          graph.addBefore(lifeCycleMethod, beforeMethod);
+        }
+      }
 
-			for (final var afterService : lifeCycleMethod.after()) {
-				for (final var afterMethod : lifeCycleMethodsByService.get(afterService)) {
-					graph.addAfter(lifeCycleMethod, afterMethod);
-				}
-			}
+      for (final var afterService : lifeCycleMethod.after()) {
+        for (final var afterMethod : lifeCycleMethodsByService.get(afterService)) {
+          graph.addAfter(lifeCycleMethod, afterMethod);
+        }
+      }
 
-			graph.addNode(lifeCycleMethod);
-		}
-	}
+      graph.addNode(lifeCycleMethod);
+    }
+  }
 
-	protected void executeInternally(final WinterPlugin plugin) {
-		final var result = execute(plugin);
-		if (!result.result()) {
-			plugin.getSLF4JLogger().error("An error occurred while executing lifecycle methods", result.throwable());
-		}
-	}
+  protected void executeInternally(final WinterPlugin plugin) {
+    final var result = execute(plugin);
+    if (!result.result()) {
+      plugin.getSLF4JLogger().error("An error occurred while executing lifecycle methods", result.throwable());
+    }
+  }
 
-	/**
-	 * Executes the lifecycle methods in the correct order.
-	 *
-	 * @param plugin The plugin
-	 * @return The result of the execution
-	 */
-	public LifeCycleResult execute(final WinterPlugin plugin) {
-		final var injector = plugin.getInjector();
-		final var iterator = graph.iterator();
-		try {
-			while (iterator.hasNext()) {
-				final var meta = iterator.next();
-				if (meta instanceof final ReflectLifeCycleMethod reflectLifeCycleMethod) {
-					final var method = reflectLifeCycleMethod.method();
-					method.invoke(reflectLifeCycleMethod.service(), injector);
-				} else if (meta instanceof final RunnableLifeCycleMethod runnableLifeCycleMethod) {
-					runnableLifeCycleMethod.method().run();
-				}
-			}
-		} catch (final Throwable throwable) {
-			return new LifeCycleResult(false, throwable);
-		}
+  /**
+   * Executes the lifecycle methods in the correct order.
+   *
+   * @param plugin The plugin
+   * @return The result of the execution
+   */
+  public LifeCycleResult execute(final WinterPlugin plugin) {
+    final var injector = plugin.getInjector();
+    final var iterator = graph.iterator();
+    try {
+      while (iterator.hasNext()) {
+        final var meta = iterator.next();
+        if (meta instanceof final ReflectLifeCycleMethod reflectLifeCycleMethod) {
+          final var method = reflectLifeCycleMethod.method();
+          method.invoke(reflectLifeCycleMethod.service(), injector);
+        } else if (meta instanceof final RunnableLifeCycleMethod runnableLifeCycleMethod) {
+          runnableLifeCycleMethod.method().run();
+        }
+      }
+    } catch (final Throwable throwable) {
+      return new LifeCycleResult(false, throwable);
+    }
 
-		return new LifeCycleResult(true, null);
-	}
+    return new LifeCycleResult(true, null);
+  }
 
-	public record LifeCycleResult(boolean result, @Nullable Throwable throwable) {
-	}
+  public record LifeCycleResult(boolean result, @Nullable Throwable throwable) {
+  }
 
-	protected abstract Class<?>[] extractAfterAnnotations(final A annotation);
+  protected abstract Class<?>[] extractAfterAnnotations(final A annotation);
 
-	protected abstract Class<?>[] extractBeforeAnnotations(final A annotation);
+  protected abstract Class<?>[] extractBeforeAnnotations(final A annotation);
 }

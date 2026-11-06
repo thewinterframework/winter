@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Requires(RequiresPluginCondition.class)
 public @interface RequiresPlugin {
-	String value();
+  String value();
 }

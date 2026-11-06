@@ -12,13 +12,13 @@ import java.lang.annotation.Annotation;
  */
 @Deprecated(forRemoval = false)
 public class ServiceAnnotationProcessor extends ClassWireProcessor {
-	@Override
-	public void onRoundStart(final ProcessorContext ctx) {
-		ctx.wireModule(ServiceModule.class);
-	}
+  @Override
+  public void onRoundStart(final ProcessorContext ctx) {
+    ctx.wireModule(ServiceModule.class);
+  }
 
-	@Override
-	protected Class<? extends Annotation> wiredAnnotation() {
-		return Service.class;
-	}
+  @Override
+  protected Class<? extends Annotation> wiredAnnotation() {
+    return Service.class;
+  }
 }
