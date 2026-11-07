@@ -6,6 +6,10 @@ Read the [complete documentation](docs/README.md) for setup, configuration, comp
 
 Velocity plugins use the `velocity` artifact and [Velocity integration guide](docs/velocity.md). The example below shows Paper setup.
 
+## Codex skill
+
+The repository includes the public [`$winter-development` skill](skills/winter-development/SKILL.md) for creating and reviewing Winter 3 Paper and Velocity plugins. Copy the `skills/winter-development` folder into `$CODEX_HOME/skills` (or `~/.codex/skills` when `CODEX_HOME` is unset), then invoke `$winter-development` in Codex. The skill links to the versioned guides for platform-specific details.
+
 ## Setup
 
 Use the same Winter version for compilation and annotation processing:

@@ -6,6 +6,8 @@ Maintainers can copy these pages into a local wiki checkout with `pwsh scripts/s
 
 ## Start here
 
+Building a plugin with Codex? Install the public [`$winter-development` skill](https://github.com/thewinterframework/winter/tree/3.0.0/skills/winter-development) for Winter 3 Paper and Velocity projects.
+
 1. [Getting started](getting-started.md): dependencies, boot class, and a first component.
 2. [Configuration](configuration.md): compile-time `winter.properties`, diagnostics, and YAML files.
 3. [Architecture](architecture.md): generated metadata and the runtime pipeline.
