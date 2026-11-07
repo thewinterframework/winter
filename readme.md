@@ -2,6 +2,8 @@
 
 Winter provides compile-time discovery, Guice injection, and a managed lifecycle for Java 21 Paper plugins. Its component model supports library and multi-module projects.
 
+Read the [complete documentation](docs/README.md) for setup, configuration, components, lifecycle, Guice, exported APIs, scheduling, Paper integration, extension points, migration, and troubleshooting. The same guides are available in the [project wiki](https://github.com/thewinterframework/winter/wiki).
+
 ## Setup
 
 Use the same Winter version for compilation and annotation processing:
