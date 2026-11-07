@@ -8,7 +8,8 @@ repositories {
 }
 
 dependencies {
-  compileOnlyApi(libs.velocity)
+  // Provided by the proxy. Keep the SNAPSHOT API out of release publication metadata.
+  compileOnly(libs.velocity)
 
   api(project(":core"))
   annotationProcessor(project(":core"))

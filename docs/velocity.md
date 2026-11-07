@@ -30,6 +30,8 @@ tasks.processResources {
 
 Package Winter and its non-platform runtime dependencies with the plugin, or use a supported dependency loader. Keep `velocity-api` provided by the proxy. An API-only Gradle module can use `winter.project.type=API` in its own `winter.properties`; see [Configuration](configuration.md).
 
+Winter's release metadata does not export `velocity-api`, because Maven Central releases cannot depend on SNAPSHOT versions. Declare the platform API explicitly as `compileOnly` and `annotationProcessor` in the consumer, as shown above. Enabling snapshot publishing in Central Portal applies to publishing Winter versions ending in `-SNAPSHOT`; it does not relax release dependency validation.
+
 ## Boot class
 
 Annotate the concrete plugin class with both `@Plugin` and `@WinterBootPlugin`. Velocity injects the constructor parameters, including `@DataDirectory`. Pass them to the Winter base class.
