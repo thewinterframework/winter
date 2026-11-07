@@ -13,7 +13,6 @@ import com.thewinterframework.component.meta.ComponentOrder;
 import com.thewinterframework.plugin.WinterPlugin;
 import com.thewinterframework.plugin.WinterDiagnostics;
 import com.thewinterframework.service.ReloadServiceManager;
-import com.thewinterframework.service.ServiceManager;
 import com.thewinterframework.wire.condition.context.ConditionContext;
 import com.thewinterframework.wire.module.AbstractProcessorModule;
 
@@ -35,7 +34,7 @@ import java.util.concurrent.Executors;
 @SyncLoading
 public final class ComponentModule extends AbstractProcessorModule {
 
-  private final ServiceManager componentManager = new ServiceManager();
+  private final ComponentManager componentManager = new ComponentManager();
   private final Map<Class<? extends ComponentHandler>, ComponentHandler> handlers = new LinkedHashMap<>();
   private final Map<Class<? extends ComponentInterceptor>, ComponentInterceptor> interceptors = new LinkedHashMap<>();
   private final Set<Class<? extends ComponentInterceptor>> globalInterceptors = new HashSet<>();
@@ -95,7 +94,6 @@ public final class ComponentModule extends AbstractProcessorModule {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public void configure(final Binder binder) {
     binder.bind(ComponentManager.class).toInstance(componentManager);
-    binder.bind(ServiceManager.class).toInstance(componentManager);
     binder.bind(ReloadServiceManager.class).in(Scopes.SINGLETON);
 
     for (final var component : components) {

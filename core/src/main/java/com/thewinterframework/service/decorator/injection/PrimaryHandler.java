@@ -3,13 +3,13 @@ package com.thewinterframework.service.decorator.injection;
 import com.google.inject.Binder;
 import com.google.inject.Singleton;
 import com.thewinterframework.service.annotation.injection.Primary;
-import com.thewinterframework.service.decorator.ServiceDecoratorHandler;
+import com.thewinterframework.component.decorator.ComponentDecoratorHandler;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
-public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
+public class PrimaryHandler implements ComponentDecoratorHandler<Primary> {
 
   private final Map<Class<?>, Class<?>> bindAsMap = new HashMap<>();
 

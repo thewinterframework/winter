@@ -18,7 +18,7 @@ Winter 3 unifies services, listeners, providers, and plugin modules under `@Comp
 | `@Component(interceptors = I.class)` | `@Component @InterceptedBy(I.class)` |
 | Compiler `-Aplugin.*` / `-Abypass.api` | Module-local `src/main/resources/winter.properties` |
 
-The old service/listener/provider/module annotations remain deprecated stereotypes for gradual migration. `ServiceDecoratorHandler` and `WinterAnnotationProcessor` remain compatibility interfaces. New extensions should use `ComponentDecoratorHandler` and `WinterProcessorExtension`.
+The old service/listener/provider/module annotations remain deprecated stereotypes for gradual migration. The unused `ServiceManager`, `ServiceModule`, and `ServiceDecorator` APIs were removed; inject `ComponentManager` and implement `ComponentDecoratorHandler` instead. `WinterAnnotationProcessor` remains a compatibility interface for compile-time extensions; new extensions should implement `WinterProcessorExtension`.
 
 ## Behavior changes to check
 

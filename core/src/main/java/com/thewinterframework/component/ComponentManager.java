@@ -9,8 +9,6 @@ import com.thewinterframework.component.decorator.ComponentDecoratorHandler;
 import com.thewinterframework.component.interceptor.ComponentInterceptor;
 import com.thewinterframework.component.meta.ComponentDescriptor;
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.service.decorator.ServiceDecorator;
-import com.thewinterframework.service.decorator.ServiceDecoratorHandler;
 import com.thewinterframework.utils.reflect.Reflections;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,18 +117,6 @@ public class ComponentManager {
     decorators.values().forEach(plugin.getInjector()::injectMembers);
   }
 
-  /**
-   * Registers a component without admission policies.
-   *
-   * @deprecated use {@link #registerComponent(ComponentContext, Collection)} so interceptors and decorators can
-   * discard the component before it is bound.
-   */
-  @Deprecated(forRemoval = false)
-  @SuppressWarnings("unchecked")
-  public void registerComponent(final @NotNull ComponentDescriptor component) throws ReflectiveOperationException {
-    discoverDecorators(component);
-  }
-
   @SuppressWarnings("unchecked")
   private void discoverDecorators(final ComponentDescriptor component) throws ReflectiveOperationException {
     final var componentType = component.type();
@@ -143,27 +129,9 @@ public class ComponentManager {
       handler.onDiscoverOnType(componentType, decoratorAnnotation);
     }
 
-    for (final var decoratorAnnotation : Reflections.findClassAnnotations(componentType, ServiceDecorator.class)) {
-      final var decorator = decoratorAnnotation.annotationType().getAnnotation(ServiceDecorator.class);
-      final var handler = (ServiceDecoratorHandler<Annotation>) decorators.computeIfAbsent(
-          decorator.value(),
-          this::createInstance
-      );
-      handler.onDiscoverOnType(componentType, decoratorAnnotation);
-    }
-
     for (final var decoratedMethod : Reflections.findMethodsWith(componentType, ComponentDecorator.class)) {
       final var decoratorAnnotation = decoratedMethod.annotation();
       final var handler = (ComponentDecoratorHandler<Annotation>) decorators.computeIfAbsent(
-          decoratorAnnotation.value(),
-          this::createInstance
-      );
-      handler.onDiscover(componentType, decoratedMethod.annotatedWith(handler.getAnnotationType()));
-    }
-
-    for (final var decoratedMethod : Reflections.findMethodsWith(componentType, ServiceDecorator.class)) {
-      final var decoratorAnnotation = decoratedMethod.annotation();
-      final var handler = (ServiceDecoratorHandler<Annotation>) decorators.computeIfAbsent(
           decoratorAnnotation.value(),
           this::createInstance
       );
@@ -180,13 +148,7 @@ public class ComponentManager {
     for (final var decoratorAnnotation : Reflections.findClassAnnotations(componentType, ComponentDecorator.class)) {
       addCandidate(candidates, decoratorAnnotation.annotationType().getAnnotation(ComponentDecorator.class).value());
     }
-    for (final var decoratorAnnotation : Reflections.findClassAnnotations(componentType, ServiceDecorator.class)) {
-      addCandidate(candidates, decoratorAnnotation.annotationType().getAnnotation(ServiceDecorator.class).value());
-    }
     for (final var decoratedMethod : Reflections.findMethodsWith(componentType, ComponentDecorator.class)) {
-      addCandidate(candidates, decoratedMethod.annotation().value());
-    }
-    for (final var decoratedMethod : Reflections.findMethodsWith(componentType, ServiceDecorator.class)) {
       addCandidate(candidates, decoratedMethod.annotation().value());
     }
     return candidates;

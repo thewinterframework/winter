@@ -3,7 +3,7 @@ package com.thewinterframework.service.decorator.lifecycle;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.service.decorator.ServiceDecoratorHandler;
+import com.thewinterframework.component.decorator.ComponentDecoratorHandler;
 import com.thewinterframework.service.meta.lifecycle.LifeCycleMethod;
 import com.thewinterframework.service.meta.lifecycle.ReflectLifeCycleMethod;
 import com.thewinterframework.service.meta.lifecycle.RunnableLifeCycleMethod;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
-public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements ServiceDecoratorHandler<A> {
+public abstract class LifeCycleDecoratorHandler<A extends Annotation> implements ComponentDecoratorHandler<A> {
 
   protected final Multimap<Class<?>, LifeCycleMethod> lifeCycleMethodsByService = HashMultimap.create();
   protected final DfsGraph<LifeCycleMethod> graph = new DfsGraph<>();

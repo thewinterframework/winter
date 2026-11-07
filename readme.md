@@ -117,4 +117,4 @@ Compile-time policies implement `ComponentCompileInterceptor` and register throu
 
 Winter resolves explicit `@LoadAfter` and `@LoadBefore` dependencies before starting independent work. A `@SyncLoading` component or module waits for preceding parallel work. Component instances are created during INJECTION, before ENABLE handlers run. When a module fails to load, Winter disables modules whose load completed successfully. During shutdown it attempts every disable callback and preserves failures.
 
-`@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` use the component pipeline. `ServiceDecoratorHandler` and `WinterAnnotationProcessor` remain available for migration.
+`@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` use the component pipeline. `WinterAnnotationProcessor` remains available for migration.

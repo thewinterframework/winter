@@ -4,7 +4,7 @@ Winter uses Guice. `PaperWinterPlugin` creates the injector after module LOAD, u
 
 ## Built-in bindings
 
-The Paper boot module binds the current instance as `WinterPlugin`, Bukkit `Plugin`, and `JavaPlugin`; its SLF4J `Logger`; and the plugin data directory as a `Path` qualified with `@DataFolder`. `ComponentModule` binds accepted component classes as singletons and exposes `ComponentManager`, `ServiceManager`, and `ReloadServiceManager`.
+The Paper boot module binds the current instance as `WinterPlugin`, Bukkit `Plugin`, and `JavaPlugin`; its SLF4J `Logger`; and the plugin data directory as a `Path` qualified with `@DataFolder`. `ComponentModule` binds accepted component classes as singletons and exposes `ComponentManager` and `ReloadServiceManager`.
 
 ```java
 @Component

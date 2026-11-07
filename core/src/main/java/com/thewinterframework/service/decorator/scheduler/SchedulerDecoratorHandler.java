@@ -1,7 +1,7 @@
 package com.thewinterframework.service.decorator.scheduler;
 
 import com.thewinterframework.plugin.WinterPlugin;
-import com.thewinterframework.service.decorator.ServiceDecoratorHandler;
+import com.thewinterframework.component.decorator.ComponentDecoratorHandler;
 import com.thewinterframework.service.meta.scheduler.SchedulerMethod;
 import com.thewinterframework.utils.reflect.AnnotatedMethodHandle;
 
@@ -9,7 +9,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class SchedulerDecoratorHandler<A extends Annotation> implements ServiceDecoratorHandler<A> {
+public abstract class SchedulerDecoratorHandler<A extends Annotation> implements ComponentDecoratorHandler<A> {
 
   private final List<SchedulerMethod> registeredMethods = new ArrayList<>();
 
