@@ -8,16 +8,16 @@ import net.kyori.adventure.text.Component;
  */
 public interface ComponentResolver<T> {
 
-	/**
-	 * The default component resolver, which simply calls {@link Object#toString()} and wraps it in a text component.
-	 */
-	ComponentResolver<Object> DEFAULT = t -> Component.text(t.toString());
+  /**
+   * The default component resolver, which simply calls {@link Object#toString()} and wraps it in a text component.
+   */
+  ComponentResolver<Object> DEFAULT = t -> Component.text(t.toString());
 
-	/**
-	 * Resolves the given object into a component.
-	 *
-	 * @param t The object to resolve.
-	 * @return The resolved component.
-	 */
-	Component resolve(T t);
+  /**
+   * Resolves the given object into a component.
+   *
+   * @param t The object to resolve.
+   * @return The resolved component.
+   */
+  Component resolve(T t);
 }

@@ -4,17 +4,17 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 public class Default<PLUGIN>API implements <PLUGIN>API {
-	private final Injector injector;
+  private final Injector injector;
 
-	@Inject
-	public Default<PLUGIN>API(final Injector injector) {
-		this.injector = injector;
-	}
+  @Inject
+  public Default<PLUGIN>API(final Injector injector) {
+    this.injector = injector;
+  }
 
-	<el>
-		@Override
-		public <TYPE> <METHOD_NAME>() {
-			return injector.getInstance(<TYPE>.class);
-		}
-	</el>
+  <el>
+    @Override
+    public <TYPE> <METHOD_NAME>() {
+      return injector.getInstance(<TYPE>.class);
+    }
+  </el>
 }

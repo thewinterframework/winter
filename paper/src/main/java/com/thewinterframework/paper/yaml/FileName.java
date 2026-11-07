@@ -14,5 +14,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @BindingAnnotation
 public @interface FileName {
-	String value();
+  String value();
 }

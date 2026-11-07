@@ -1,12 +1,16 @@
 package com.thewinterframework.velocity;
 
+import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Stage;
 import com.thewinterframework.expression.ExpressionResolver;
 import com.thewinterframework.expression.JexlExpressionResolver;
 import com.thewinterframework.plugin.DataFolder;
+import com.thewinterframework.plugin.WinterDiagnostics;
 import com.thewinterframework.plugin.WinterPlugin;
+import com.thewinterframework.plugin.lifecycle.PluginLifecycle;
+import com.thewinterframework.plugin.lifecycle.PluginPhase;
 import com.thewinterframework.plugin.module.PluginModuleManager;
 import com.thewinterframework.plugin.platform.PlatformPluginManager;
 import com.thewinterframework.scheduler.PluginScheduler;
@@ -15,183 +19,228 @@ import com.thewinterframework.velocity.scheduler.VelocityPluginScheduler;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
-import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.key.KeyPattern;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
-
-/**
- * Base class for Velocity plugins annotated with {@code @WinterBootPlugin} and
- * Velocity's {@code @Plugin}. A concrete plugin must provide an injected
- * constructor accepting Velocity's {@link Injector}. Winter creates a child of
- * that injector during proxy initialization and inherits all platform bindings.
- */
+/** Base class for Winter plugins running on Velocity. */
 public abstract class VelocityWinterPlugin implements WinterPlugin {
 
-	private final ProxyServer server;
-	private final Logger logger;
-	private final Path dataDirectory;
-	private final Injector velocityInjector;
-	protected final PluginModuleManager moduleManager;
-	protected final PluginScheduler scheduler;
-	protected final PlatformPluginManager platformPluginManager;
-	protected ExpressionResolver expressionResolver = new JexlExpressionResolver();
-	protected Injector injector;
-	private boolean started;
-	private boolean modulesLoaded;
-	private boolean enabled;
-	private boolean stopped;
+  private final ProxyServer server;
+  private final Logger logger;
+  private final Path dataDirectory;
+  private final PluginModuleManager moduleManager;
+  private final PluginLifecycle lifecycle;
+  private final PluginScheduler scheduler;
+  private final PlatformPluginManager platformManager;
 
-	protected VelocityWinterPlugin(final Injector velocityInjector) {
-		this.velocityInjector = requireNonNull(velocityInjector, "velocityInjector");
-		this.server = velocityInjector.getInstance(ProxyServer.class);
-		this.logger = velocityInjector.getInstance(Logger.class);
-		this.dataDirectory = velocityInjector.getInstance(Key.get(Path.class, DataDirectory.class));
-		this.moduleManager = new PluginModuleManager(this);
-		this.scheduler = new VelocityPluginScheduler(this, server);
-		this.platformPluginManager = new VelocityPlatform(server);
-	}
+  private ExpressionResolver expressionResolver = new JexlExpressionResolver();
+  private Injector injector;
+  private boolean initialized;
 
-	@Subscribe
-	public final void onProxyInitialize(final ProxyInitializeEvent event) {
-		if (started) {
-			return;
-		}
-		started = true;
-		final var startTime = System.currentTimeMillis();
-		try {
-			if (!moduleManager.scanModules() || !moduleManager.loadModules()) {
-				throw new IllegalStateException("Failed to load Winter modules");
-			}
-			modulesLoaded = true;
-			onPluginLoad();
-			injector = createInjector();
-			injector.injectMembers(this);
-			if (!moduleManager.injectModules() || !moduleManager.enableModules()) {
-				throw new IllegalStateException("Failed to enable Winter modules");
-			}
-			enabled = true;
-			onPluginEnable();
-			logger.info("Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
-		} catch (final RuntimeException | LinkageError e) {
-			logger.error("Failed to initialize Winter plugin", e);
-			try {
-				shutdown();
-			} catch (final RuntimeException | LinkageError cleanupFailure) {
-				e.addSuppressed(cleanupFailure);
-			}
-			throw e;
-		}
-	}
+  /**
+   * Called by a subclass constructor that receives Velocity's injected services.
+   * Keep platform registration and other proxy operations in the initialization event.
+   *
+   * @param server the running proxy
+   * @param logger this plugin's Velocity logger
+   * @param dataDirectory this plugin's data directory
+   */
+  protected VelocityWinterPlugin(
+      final ProxyServer server,
+      final Logger logger,
+      final @DataDirectory Path dataDirectory
+  ) {
+    this.server = Objects.requireNonNull(server, "server");
+    this.logger = Objects.requireNonNull(logger, "logger");
+    this.dataDirectory = Objects.requireNonNull(dataDirectory, "dataDirectory");
+    this.moduleManager = new PluginModuleManager(this);
+    this.lifecycle = new PluginLifecycle(this);
+    this.scheduler = new VelocityPluginScheduler(server, this);
+    this.platformManager = new VelocityPlatform(server);
+  }
 
-	@Subscribe(priority = Short.MAX_VALUE)
-	public final void onProxyShutdown(final ProxyShutdownEvent event) {
-		shutdown();
-	}
+  /**
+   * Runs Winter's scan, load, injection, and enable phases after Velocity registers the plugin.
+   *
+   * @param event the proxy initialization event
+   */
+  @Subscribe
+  public final void onProxyInitialize(final ProxyInitializeEvent event) {
+    if (initialized) {
+      throw new IllegalStateException("Winter plugin is already initialized");
+    }
+    final var startTime = System.currentTimeMillis();
+    try {
+      lifecycle.run(PluginPhase.SCAN, () -> requireSuccess(moduleManager.scanModules(), "scan"));
+      lifecycle.run(PluginPhase.LOAD, () -> {
+        requireSuccess(moduleManager.loadModules(), "load");
+        onPluginLoad();
+      });
+      lifecycle.run(PluginPhase.INJECTION, () -> {
+        injector = createInjector();
+        injector.injectMembers(this);
+        requireSuccess(moduleManager.injectModules(), "inject");
+      });
+      lifecycle.run(PluginPhase.ENABLE, () -> {
+        requireSuccess(moduleManager.enableModules(), "enable");
+        onPluginEnable();
+      });
+      initialized = true;
+      WinterDiagnostics.log(this, "Plugin enabled in {}ms", System.currentTimeMillis() - startTime);
+    } catch (final Exception | Error failure) {
+      try {
+        if (!moduleManager.disableModules()) {
+          logger.error("One or more Winter modules failed to disable after initialization failure");
+        }
+      } catch (final RuntimeException cleanupFailure) {
+        failure.addSuppressed(cleanupFailure);
+      } finally {
+        scheduler.cancelAllTasks();
+      }
+      logger.error("Winter plugin initialization failed", failure);
+      throw new IllegalStateException("Winter plugin initialization failed", failure);
+    }
+  }
 
-	private void shutdown() {
-		if (!started || stopped) {
-			return;
-		}
-		stopped = true;
-		try {
-			if (modulesLoaded && injector != null && !moduleManager.disableModules()) {
-				logger.error("Failed to disable Winter modules");
-			}
-			if (enabled) {
-				onPluginDisable();
-			}
-		} finally {
-			try {
-				scheduler.cancelAllTasks();
-			} finally {
-				server.getEventManager().unregisterListeners(this);
-				enabled = false;
-			}
-		}
-	}
+  /**
+   * Disables loaded modules and cancels scheduled tasks during proxy shutdown.
+   *
+   * @param event the proxy shutdown event
+   */
+  @Subscribe
+  public final void onProxyShutdown(final ProxyShutdownEvent event) {
+    final var startTime = System.currentTimeMillis();
+    try {
+      lifecycle.run(PluginPhase.DISABLE, () -> {
+        if (!moduleManager.disableModules()) {
+          logger.error("One or more Winter modules failed to disable");
+        }
+        if (initialized) {
+          onPluginDisable();
+        }
+      });
+    } catch (final Exception | Error failure) {
+      logger.error("Winter plugin shutdown failed", failure);
+    } finally {
+      scheduler.cancelAllTasks();
+      initialized = false;
+    }
+    WinterDiagnostics.log(this, "Plugin disabled in {}ms", System.currentTimeMillis() - startTime);
+  }
 
-	protected Injector createInjector() {
-		return velocityInjector.createChildInjector(getGuiceModules());
-	}
+  /**
+   * Creates the plugin injector after modules have loaded.
+   *
+   * @return the new injector
+   */
+  protected Injector createInjector() {
+    return Guice.createInjector(getGuiceStage(), getGuiceModules());
+  }
 
-	protected List<Module> getGuiceModules() {
-		final var modules = new ArrayList<Module>();
-		modules.add(binder -> {
-			binder.bind(WinterPlugin.class).toInstance(this);
-			binder.bind(VelocityWinterPlugin.class).toInstance(this);
-			binder.bind(Path.class).annotatedWith(DataFolder.class).toInstance(dataDirectory);
-			binder.bind(PluginScheduler.class).toInstance(scheduler);
-			binder.bind(PlatformPluginManager.class).toInstance(platformPluginManager);
-			binder.bind(ExpressionResolver.class).toInstance(expressionResolver);
-		});
-		modules.addAll(moduleManager.asGuiceModules());
-		modules.add(this);
-		return modules;
-	}
+  /**
+   * Returns platform bindings, loaded Winter modules, and the plugin's own bindings.
+   *
+   * @return Guice modules in installation order
+   */
+  protected List<Module> getGuiceModules() {
+    final var modules = new ArrayList<Module>();
+    modules.add(binder -> {
+      binder.bind(WinterPlugin.class).toInstance(this);
+      binder.bind(VelocityWinterPlugin.class).toInstance(this);
+      binder.bind(ProxyServer.class).toInstance(server);
+      binder.bind(Logger.class).toInstance(logger);
+      binder.bind(Path.class).annotatedWith(DataFolder.class).toInstance(dataDirectory);
+      binder.bind(Path.class).annotatedWith(DataDirectory.class).toInstance(dataDirectory);
+    });
+    modules.addAll(moduleManager.asGuiceModules());
+    modules.add(this);
+    return modules;
+  }
 
-	/** Returns the original injector supplied to the plugin by Velocity. */
-	public final Injector getVelocityInjector() {
-		return velocityInjector;
-	}
+  /**
+   * Returns the Guice stage used to construct the plugin injector.
+   *
+   * @return the injector stage
+   */
+  protected Stage getGuiceStage() {
+    return Stage.PRODUCTION;
+  }
 
-	public final ProxyServer getServer() {
-		return server;
-	}
+  private void requireSuccess(final boolean successful, final String action) {
+    if (!successful) {
+      throw new IllegalStateException("Failed to " + action + " Winter modules");
+    }
+  }
 
-	public final Path getDataDirectory() {
-		return dataDirectory;
-	}
+  /**
+   * Returns the Velocity proxy injected into this plugin.
+   *
+   * @return the proxy server
+   */
+  public final ProxyServer getProxyServer() {
+    return server;
+  }
 
-	public final PluginContainer getPluginContainer() {
-		return server.getPluginManager().fromInstance(this)
-				.orElseThrow(() -> new IllegalStateException("The plugin has not been registered with Velocity"));
-	}
+  /**
+   * Returns the plugin data directory injected by Velocity.
+   *
+   * @return the data directory
+   */
+  public final Path getDataDirectory() {
+    return dataDirectory;
+  }
 
-	@Override
-	public final Logger getSLF4JLogger() {
-		return logger;
-	}
+  @Override
+  public final Injector getInjector() {
+    return injector;
+  }
 
-	@Override
-	public final PluginModuleManager getModuleManager() {
-		return moduleManager;
-	}
+  @Override
+  public final @NotNull Logger getSLF4JLogger() {
+    return logger;
+  }
 
-	/** Returns Winter's child injector, or {@code null} before initialization. */
-	@Override
-	public Injector getInjector() {
-		return injector;
-	}
+  @Override
+  public final PluginModuleManager getModuleManager() {
+    return moduleManager;
+  }
 
-	@Override
-	public PluginScheduler getScheduler() {
-		return scheduler;
-	}
+  @Override
+  public final PluginScheduler getScheduler() {
+    return scheduler;
+  }
 
-	@Override
-	public PlatformPluginManager getPlatformManager() {
-		return platformPluginManager;
-	}
+  @Override
+  public final PlatformPluginManager getPlatformManager() {
+    return platformManager;
+  }
 
-	@Override
-	public ExpressionResolver getExpressionResolver() {
-		return expressionResolver;
-	}
+  @Override
+  public final ExpressionResolver getExpressionResolver() {
+    return expressionResolver;
+  }
 
-	@Override
-	public void setExpressionResolver(final ExpressionResolver resolver) {
-		this.expressionResolver = requireNonNull(resolver, "resolver");
-	}
+  @Override
+  public final void setExpressionResolver(final ExpressionResolver resolver) {
+    expressionResolver = Objects.requireNonNull(resolver, "resolver");
+  }
 
-	@Override
-	public String namespace() {
-		return getPluginContainer().getDescription().getId();
-	}
+  @Override
+  @KeyPattern.Namespace
+  public final @NotNull String namespace() {
+    final var metadata = getClass().getAnnotation(Plugin.class);
+    if (metadata == null) {
+      throw new IllegalStateException("VelocityWinterPlugin subclasses must declare @Plugin");
+    }
+    return metadata.id();
+  }
 }

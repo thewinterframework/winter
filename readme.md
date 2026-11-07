@@ -1,309 +1,126 @@
-[![Core Current](https://img.shields.io/maven-central/v/com.thewinterframework/core)](https://central.sonatype.com/artifact/com.thewinterframework/core)
+# The Winter Framework 3.0
 
-# ❄️ The Winter Framework ❄️
+Winter provides compile-time discovery, Guice injection, and a managed lifecycle for Java 21 Paper and Velocity plugins. Its component model supports library and multi-module projects.
 
-**The Winter Framework** is a modern, dependency-injection-first plugin framework for Minecraft servers. Heavily
-inspired by [Spring Boot](https://github.com/spring-projects/spring-boot), it is designed to minimize boilerplate code,
-allowing developers to focus on building features rather than managing infrastructure.
+Read the [complete documentation](docs/README.md) for setup, configuration, components, lifecycle, Guice, exported APIs, scheduling, Paper integration, extension points, migration, and troubleshooting. The same guides are available in the [project wiki](https://github.com/thewinterframework/winter/wiki).
 
-Winter Core uses Adventure 5.2.0 and targets Java 21. The Paper module targets Paper 26.2
-(`26.2.build.134-stable`) and requires Java 25. Build the project with the included Gradle 9.1.0 wrapper,
-with JDK 21 and JDK 25 available for the respective module toolchains.
+Velocity plugins use the `velocity` artifact and [Velocity integration guide](docs/velocity.md). The example below shows Paper setup.
 
----
+## Codex skill
 
-## 🚀 Getting Started
+The repository includes the public [`$winter-development` skill](skills/winter-development/SKILL.md) for creating and reviewing Winter 3 Paper and Velocity plugins. Copy the `skills/winter-development` folder into `$CODEX_HOME/skills` (or `~/.codex/skills` when `CODEX_HOME` is unset), then invoke `$winter-development` in Codex. The skill links to the versioned guides for platform-specific details.
 
-To integrate Winter into your project, add the following to your `build.gradle.kts`:
+## Setup
+
+Use the same Winter version for compilation and annotation processing:
 
 ```kotlin
-plugins {
-    `java-library` // Required to use the 'api' scope
+dependencies {
+  api("com.thewinterframework:paper:3.0.0")
+  annotationProcessor("com.thewinterframework:paper:3.0.0")
 }
 
-dependencies {
-    // Choose 'paper' or 'velocity' and replace [VERSION] with your desired release
-    api("com.thewinterframework:paper:[VERSION]")
-    annotationProcessor("com.thewinterframework:paper:[VERSION]")
+tasks.processResources {
+  exclude("winter.properties")
 }
 ```
 
-> **Note:** The `annotationProcessor` is critical for Winter's component scanning and dependency injection to function
-> correctly.
+Winter's annotation processors read `src/main/resources/winter.properties` during compilation. The Gradle exclusion keeps this project-specific file out of the runtime artifact. Available keys:
 
----
+```properties
+winter.project.type=IMPL
+winter.plugin.package=com.example.api
+winter.plugin.name=ExamplePlugin
+winter.expose.bypass-api=false
+winter.debug=false
+```
 
-## 🧩 Creating a Winter Plugin
+Use `winter.project.type=API` in an API-only module and `IMPL` otherwise. In an API-only module, set `winter.plugin.package` and `winter.plugin.name` to name the generated interface. In a single-module plugin, `winter.expose.bypass-api=true` derives that name and package from its `@WinterBootPlugin` class. `winter.debug=true` generates a marker that makes routine Winter messages visible at INFO; otherwise they use DEBUG. Errors remain visible. Each Gradle module reads its own file.
 
-A Winter plugin starts by defining a main class that extends `PaperWinterPlugin` and is annotated with
-`@WinterBootPlugin`.
+Legacy compiler options remain supported for migration. `-parameters` is a Java compiler flag, not a Winter option; keep it when a command framework relies on Java parameter names.
 
 ```java
-
 @WinterBootPlugin
-public class MyPlugin extends PaperWinterPlugin {
-    // Your plugin logic here
+public final class ExamplePlugin extends PaperWinterPlugin {
 }
 ```
 
----
+Point `plugin.yml` at the boot class. Winter generates module and component indexes at compile time.
 
-## Velocity
+## Components
 
-The `velocity` module targets Velocity 3.4 and Java 21. Use the Velocity API version appropriate for your proxy:
+`@Component` is a marker. Put metadata in separate annotations:
+
+```java
+@Component
+@ComponentPriority(-100)
+public final class ConfigurationComponent {
+}
+
+@Component
+@LoadAfter(ConfigurationComponent.class)
+public final class RepositoryComponent {
+  @Inject
+  public RepositoryComponent(final ConfigurationComponent configuration) {
+  }
+}
+```
+
+`@LoadBefore` adds the reverse ordering edge. Components and independent plugin modules run on Java 21 virtual threads by default. `@SyncLoading` runs a component or module on the lifecycle thread and waits for earlier work:
+
+```java
+@Component
+@SyncLoading
+public final class MainThreadComponent {
+}
+```
+
+The processor also marks components synchronous when their source directly references Bukkit or Paper types, or implements Bukkit's `Listener`. This scan cannot prove a transitive call is thread-safe. Mark components that reach Bukkit indirectly with `@SyncLoading`.
+
+Conditions and lifecycle decorators work on components. A Paper `Listener` annotated with `@Component` is handled by the Paper module. The old `@Service`, `@ListenerComponent`, `@ProviderComponent`, and `@ModuleComponent` annotations remain as deprecated stereotypes.
+
+## API and external dependencies
+
+An API module may declare an exposed contract:
+
+```java
+@Expose
+public interface ProfileRepository {
+  Profile find(UUID playerId);
+}
+```
+
+Its `winter.properties` should set `winter.project.type=API`, `winter.plugin.package`, and `winter.plugin.name`. The implementation module compiles against that API and exports a component:
+
+```java
+@External
+public final class MongoProfileRepository implements ProfileRepository {
+  // Implement the contract.
+}
+```
+
+Winter writes `META-INF/winter/components.index` with the external component and its exposed interface binding. The consuming plugin discovers the index at compile time, wires `ExternalBindingsModule` automatically, and Guice can inject `ProfileRepository`. The generated `ExposeAPIModule` also binds the generated plugin API interface to its default implementation. Producer artifacts must be on the consumer's compile and annotation processor paths, and the implementation must be available to the consumer class loader at runtime. Conflicting exports of one contract fail with an error.
 
 ```kotlin
-repositories {
-    mavenCentral()
-    maven("https://repo.papermc.io/repository/maven-public/")
-}
-
 dependencies {
-    compileOnly("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
-    annotationProcessor("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
-    api("com.thewinterframework:velocity:[VERSION]")
-    annotationProcessor("com.thewinterframework:velocity:[VERSION]")
+  implementation(project(":api"))
+  implementation(project(":implementation"))
+  annotationProcessor(project(":implementation"))
 }
 ```
 
-Bundle Winter and its runtime dependencies in your plugin JAR, for example using Shadow. Velocity's annotation processor
-generates `velocity-plugin.json`, while Winter's processor generates component and module discovery.
+`@External` is a component stereotype and may be composed on another annotation. An external component without an `@Expose` interface is discovered but has no interface binding generated.
 
-```java
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.thewinterframework.plugin.WinterBootPlugin;
-import com.thewinterframework.velocity.VelocityWinterPlugin;
-import com.velocitypowered.api.plugin.Plugin;
+## Extensions and admission
 
-@WinterBootPlugin
-@Plugin(id = "my-plugin", name = "My Plugin", version = "1.0.0")
-public final class MyPlugin extends VelocityWinterPlugin {
-    @Inject
-    public MyPlugin(final Injector velocityInjector) {
-        super(velocityInjector);
-    }
-}
-```
+`ComponentHandler` adds behavior to matching components; register it with `ServiceLoader`, or name it with `@HandledBy(MyHandler.class)`. `@InterceptedBy(MyInterceptor.class)` applies an interceptor to one component. `ComponentInterceptor` and `ComponentDecoratorHandler` can return `ComponentDecision.DISCARD` at `LOAD`, `INJECTION`, or `ENABLE`. LOAD and INJECTION decisions occur before Guice binding; ENABLE decisions prevent enable and disable callbacks for that component. Interceptors also receive `before`, `after`, and `onFailure` callbacks for `LOAD`, `INJECTION`, `ENABLE`, and `DISABLE`. The older `decide(ComponentContext)` method still applies at LOAD.
 
-Winter creates a **child of Velocity's plugin injector** during `ProxyInitializeEvent`. Platform bindings such as
-`ProxyServer`, `Logger`, `PluginContainer`, `@DataDirectory Path`, and the singleton plugin instance are inherited.
-The child adds Winter services, providers, modules, `@DataFolder Path`, `PluginScheduler`, `PlatformPluginManager`, and
-`ExpressionResolver`. `getVelocityInjector()` returns the original injector; `getInjector()` returns the child once
-Winter starts. Put Winter dependencies in managed components: Velocity constructs the main plugin before the child exists.
+Compile-time policies implement `ComponentCompileInterceptor` and register through `META-INF/services/com.thewinterframework.processor.component.ComponentCompileInterceptor`. Returning `DISCARD` prevents the component from entering generated indexes. General code generation extensions implement `WinterProcessorExtension` through `ServiceLoader`; these receive round callbacks and can wire plugin modules.
 
-`onPluginLoad()` and module loading run during initialization before the child injector is created. `onPluginEnable()`
-runs after injection and module enabling. Shutdown runs module/service disable hooks, calls `onPluginDisable()`, cancels
-the plugin's tasks, and unregisters its listeners. Services, lifecycle/reload hooks, providers, modules, expressions,
-`@Primary`, and exposed APIs use the shared `core` module.
+`PluginLifecycleInterceptor` observes `SCAN`, `LOAD`, `INJECTION`, `ENABLE`, and `DISABLE` for the Paper plugin. Add it through `META-INF/services/com.thewinterframework.plugin.lifecycle.PluginLifecycleInterceptor`. Interceptors run by priority and class name; `after` runs in reverse order, and `onFailure` receives the original failure.
 
-For listeners, use `com.thewinterframework.velocity.listener.ListenerComponent` with Velocity's `@Subscribe` methods;
-Velocity listeners do not implement Bukkit's `Listener` interface. They are injected as singletons and registered automatically.
+## Lifecycle behavior
 
-Velocity has no main thread. Both `sync` and `async` scheduler methods, including `getMainThreadExecutor()`, use Velocity's
-scheduler thread pool. Callers must account for concurrency. Winter task IDs support individual cancellation, and
-`TimeUnit.TICKS` represents 50 milliseconds per tick.
+Winter resolves explicit `@LoadAfter` and `@LoadBefore` dependencies before starting independent work. A `@SyncLoading` component or module waits for preceding parallel work. Component instances are created during INJECTION, before ENABLE handlers run. When a module fails to load, Winter disables modules whose load completed successfully. During shutdown it attempts every disable callback and preserves failures.
 
-For YAML, inject `com.thewinterframework.velocity.yaml.YamlConfig` with the Velocity module's `@FileName("config")`.
-Configurations load before injector creation, copy matching `.yml` classpath resources on first use, and create an empty
-file when no default exists. This Bukkit-independent API provides `load()`, `save()`, `get()`, `set()`, dotted paths,
-typed getters, and lists. Files are available in expressions such as `config.get('feature.enabled')`.
-
----
-
-## 📦 Plugin Modules
-
-Plugin Modules allow you to encapsulate functionality and hook into the plugin lifecycle. By implementing
-`PluginModule`, you gain access to `onLoad`, `onEnable`, and `onDisable` hooks. Since `PluginModule` extends Guice's
-`Module` class, you can perform manual dependency bindings here.
-
-```java
-
-@ModuleComponent
-public class TestModule implements PluginModule {
-
-    @Override
-    public boolean onEnable(final WinterPlugin plugin) {
-        plugin.getSLF4JLogger().info("Module enabled!");
-        return true;
-    }
-}
-```
-
-> [!CAUTION]
-> `onLoad` runs **before** the Guice injector is initialized. `onEnable` and `onDisable` run **after** the injector is
-> ready, allowing you to safely use `@Inject` within those methods.
-
----
-
-## ⚙️ Services & Lifecycle
-
-### Defining Services
-
-Annotate a class with `@Service` to register it as a Singleton managed by Winter.
-
-```java
-
-@Service
-public class MyFirstService {
-    private final Plugin plugin;
-
-    @Inject
-    public MyFirstService(final Plugin plugin) {
-        this.plugin = plugin;
-    }
-}
-```
-
-### Lifecycle Hooks
-
-Use `@OnEnable` and `@OnDisable` to handle setup and teardown logic. These methods support automatic parameter
-injection.
-
-```java
-
-@Service
-public class WarpService {
-    @OnEnable
-    void loadWarps(final WarpStorage storage, final Logger logger) {
-        // Logic executed upon service initialization
-    }
-}
-```
-
----
-
-## ⏱️ Task Schedulers
-
-Winter simplifies task scheduling through method-level decorators:
-
-* **`@RepeatingTask`**: Executes a method at specific intervals.
-* **`@ScheduledAt`**: Executes a method at a specific time (e.g., daily).
-
-```java
-
-@RepeatingTask(every = "1", unit = "MINUTES", async = "true")
-public void broadcastMessage(final MyOtherService service) {
-    service.broadcast("Hello World!");
-}
-```
-
----
-
-## 💡 Advanced Features
-
-### Primary Implementations
-
-If multiple services implement the same interface, use `@Primary` to define which one should be injected by default.
-
-```java
-
-@Service
-@Primary
-public class DefaultMessageHandler implements MessageHandler { ...
-}
-```
-
-### Annotation Expressions
-
-Winter supports [JEXL](https://commons.apache.org/proper/commons-jexl/) within annotations, allowing for dynamic
-configuration values.
-
-```java
-
-@RepeatingTask(every = "settings.timerInterval() * 2", unit = "SECONDS")
-public void timer() { ...}
-```
-
-### Conditional Loading
-
-Use conditional annotations to control whether a component should be registered.
-
-```java
-
-@ListenerComponent
-@RequiresExpr("settings.joinEnabled()")
-public class JoinListener implements Listener { ...
-}
-```
-
----
-
-`@RequiresPlugin("PluginName")` checks whether a dependency is **present during loading**; Paper plugins may not yet be
-enabled at that point. On Velocity, use the dependency's plugin ID. Also declare optional dependencies in `plugin.yml`
-(`softdepend`) or Velocity's `@Plugin(dependencies = @Dependency(id = "dependency", optional = true))` to establish
-class visibility and loading order. This condition applies to services, listeners, providers, and module components.
-
----
-
-## 🛠️ Custom Decorators & Conditions
-
-### 1. Creating Custom Service Decorators
-
-Service decorators allow you to modify or intercept the lifecycle of a service registration.
-
-**The Handler:**
-
-```java
-public class PrimaryHandler implements ServiceDecoratorHandler<Primary> {
-    @Override
-    public Class<Primary> getAnnotationType() {
-        return Primary.class;
-    }
-
-    @Override
-    public void onDiscoverOnType(final Class<?> service, final Primary annotation) {
-        // Logic to modify binding
-    }
-}
-```
-
-**The Annotation:**
-
-```java
-
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@ServiceDecorator(PrimaryHandler.class)
-public @interface Primary {
-    Class<?> value() default Void.class;
-}
-```
-
-### 2. Creating Custom Conditional Annotations
-
-**The Condition:**
-
-```java
-public class RequiresExpressionCondition implements ComponentCondition {
-    @Override
-    public boolean matches(final ConditionContext context, final Annotation rawAnnotation) {
-        final var annotation = (RequiresExpr) rawAnnotation;
-        final var resolver = context.getPlugin().getExpressionResolver();
-        return Boolean.TRUE.equals(resolver.resolve(annotation.value(), Boolean.class));
-    }
-}
-```
-
-**The Annotation:**
-
-```java
-
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@Requires(RequiresExpressionCondition.class)
-public @interface RequiresExpr {
-    String value();
-}
-```
-
----
-
-## 📂 Configuration & Commands
-
-* **YamlConfig**: Inject `YamlConfig` into any component and use the `@FileName` annotation to bind it to a file.
-* **Commands**: Integrate the [Winter Command Module](https://github.com/thewinterframework/command) to
-  leverage [Incendo Cloud](https://github.com/Incendo/cloud) for clean, auto-registered command structures.
-
-> **Tip:** For advanced file handling, we highly recommend
-> the [SpongePowered Configurate Module](https://github.com/thewinterframework/configuration).
+`@OnEnable`, `@OnDisable`, `@OnReload`, `@RepeatingTask`, `@ScheduledAt`, and `@Primary` use the component pipeline. `WinterAnnotationProcessor` remains available for migration.

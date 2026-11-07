@@ -12,61 +12,63 @@ import java.util.List;
 @SuppressWarnings("unused")
 public class ComponentJoiner {
 
-	/**
-	 * The delimiter to use when joining components.
-	 */
-	private final Component delimiter;
+  /**
+   * The delimiter to use when joining components.
+   */
+  private final Component delimiter;
 
-	/**
-	 * The result of the join operation.
-	 */
-	private Component result = Component.empty();
+  /**
+   * The result of the join operation.
+   */
+  private Component result = Component.empty();
+  private boolean empty = true;
 
-	/**
-	 * Creates a new component joiner with the given delimiter.
-	 *
-	 * @param delimiter The delimiter to use.
-	 */
-	public ComponentJoiner(final @NotNull Component delimiter) {
-		this.delimiter = delimiter;
-	}
+  /**
+   * Creates a new component joiner with the given delimiter.
+   *
+   * @param delimiter The delimiter to use.
+   */
+  public ComponentJoiner(final @NotNull Component delimiter) {
+    this.delimiter = delimiter;
+  }
 
-	/**
-	 * Creates a new component joiner with newlines as the delimiter.
-	 *
-	 * @param components The components to join.
-	 */
-	public static Component newLine(final @NotNull List<Component> components) {
-		return Component.join(JoinConfiguration.newlines(), components);
-	}
+  /**
+   * Creates a new component joiner with newlines as the delimiter.
+   *
+   * @param components The components to join.
+   */
+  public static Component newLine(final @NotNull List<Component> components) {
+    return Component.join(JoinConfiguration.newlines(), components);
+  }
 
-	/**
-	 * Appends a component to the joiner.
-	 *
-	 * @param component The component to append.
-	 * @return The component joiner.
-	 */
-	public ComponentJoiner append(final @NotNull Component component) {
-		if (isEmpty()) {
-			result = component;
-		} else {
-			result = result.append(delimiter).append(component);
-		}
+  /**
+   * Appends a component to the joiner.
+   *
+   * @param component The component to append.
+   * @return The component joiner.
+   */
+  public ComponentJoiner append(final @NotNull Component component) {
+    if (empty) {
+      result = component;
+      empty = false;
+    } else {
+      result = result.append(delimiter).append(component);
+    }
 
-		return this;
-	}
+    return this;
+  }
 
-	/**
-	 * @return The joined component.
-	 */
-	public Component component() {
-		return result;
-	}
+  /**
+   * @return The joined component.
+   */
+  public Component component() {
+    return result;
+  }
 
-	/**
-	 * @return Whether the joiner is empty.
-	 */
-	public boolean isEmpty() {
-		return result.equals(Component.empty());
-	}
+  /**
+   * @return Whether the joiner is empty.
+   */
+  public boolean isEmpty() {
+    return empty;
+  }
 }

@@ -5,28 +5,28 @@ import com.thewinterframework.service.meta.lifecycle.RunnableLifeCycleMethod;
 import org.jetbrains.annotations.NotNull;
 
 public class OnReloadDecoratorHandler extends LifeCycleDecoratorHandler<OnReload> {
-	@Override
-	public Class<OnReload> getAnnotationType() {
-		return OnReload.class;
-	}
+  @Override
+  public Class<OnReload> getAnnotationType() {
+    return OnReload.class;
+  }
 
-	@Override
-	protected Class<?>[] extractAfterAnnotations(final OnReload annotation) {
-		return annotation.after();
-	}
+  @Override
+  protected Class<?>[] extractAfterAnnotations(final OnReload annotation) {
+    return annotation.after();
+  }
 
-	@Override
-	protected Class<?>[] extractBeforeAnnotations(final OnReload annotation) {
-		return annotation.before();
-	}
+  @Override
+  protected Class<?>[] extractBeforeAnnotations(final OnReload annotation) {
+    return annotation.before();
+  }
 
-	/**
-	 * Add a runnable to the on reload graph.
-	 *
-	 * @param service The service to add the runnable to.
-	 * @param method  The method to add.
-	 */
-	public void addReloadMethod(final @NotNull Class<?> service, final @NotNull Runnable method) {
-		graph.addNode(new RunnableLifeCycleMethod(service, method, new Class[]{}, new Class[]{}));
-	}
+  /**
+   * Add a runnable to the on reload graph.
+   *
+   * @param service The service to add the runnable to.
+   * @param method  The method to add.
+   */
+  public void addReloadMethod(final @NotNull Class<?> service, final @NotNull Runnable method) {
+    graph.addNode(new RunnableLifeCycleMethod(service, method, new Class[]{}, new Class[]{}));
+  }
 }

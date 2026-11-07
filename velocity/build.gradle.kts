@@ -1,41 +1,39 @@
 plugins {
-    id("java")
-    `java-library`
+  id("java")
+  `java-library`
 }
 
 repositories {
-    mavenCentral()
-    maven("https://repo.papermc.io/repository/maven-public/")
+  maven("https://repo.papermc.io/repository/maven-public/")
 }
 
 dependencies {
-    compileOnlyApi(libs.velocity)
-    api(project(":core"))
-    annotationProcessor(project(":core"))
+  compileOnlyApi(libs.velocity)
 
-    compileOnlyApi(libs.auto.service.annotations)
-    annotationProcessor(libs.auto.service)
-    implementation(libs.snakeyaml)
+  api(project(":core"))
+  annotationProcessor(project(":core"))
 
-    testImplementation(libs.velocity)
-    testImplementation(libs.junit.api)
-    testImplementation(libs.adventure)
-    testRuntimeOnly(libs.junit.engine)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+  // Velocity generates velocity-plugin.json from the consumer's @Plugin declaration.
+  annotationProcessor(libs.velocity)
+
+  testImplementation(libs.junit.api)
+  testImplementation(libs.velocity)
+  testRuntimeOnly(libs.junit.engine)
+  testAnnotationProcessor(project(":core"))
+  testAnnotationProcessor(libs.velocity)
 }
 
 java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
-    }
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(21))
+  }
 }
 
 tasks.withType<JavaCompile> {
-    options.encoding = "UTF-8"
-    options.compilerArgs.add("-parameters")
+  options.encoding = "UTF-8"
+  options.compilerArgs.add("-parameters")
 }
 
 tasks.test {
-    useJUnitPlatform()
-    systemProperty("winter.test.classpath", sourceSets.test.get().runtimeClasspath.asPath)
+  useJUnitPlatform()
 }

@@ -3,25 +3,24 @@ package com.thewinterframework.velocity.platform;
 import com.thewinterframework.plugin.platform.PlatformPluginManager;
 import com.velocitypowered.api.proxy.ProxyServer;
 
-/**
- * Velocity identifies plugins by ID and has no separate enabled/disabled state.
- */
-public class VelocityPlatform implements PlatformPluginManager {
+import java.util.Objects;
 
-	private final ProxyServer server;
+/** Resolves loaded Velocity plugins by their plugin ID. */
+public final class VelocityPlatform implements PlatformPluginManager {
 
-	public VelocityPlatform(final ProxyServer server) {
-		this.server = server;
-	}
+  private final ProxyServer server;
 
-	@Override
-	public boolean isPluginPresent(final String pluginId) {
-		return server.getPluginManager().getPlugin(pluginId).isPresent();
-	}
+  /**
+   * Creates a plugin lookup backed by the given proxy.
+   *
+   * @param server the proxy server
+   */
+  public VelocityPlatform(final ProxyServer server) {
+    this.server = Objects.requireNonNull(server, "server");
+  }
 
-	@Override
-	public boolean isPluginEnabled(final String pluginId) {
-		return server.getPluginManager().getPlugin(pluginId)
-				.flatMap(container -> container.getInstance()).isPresent();
-	}
+  @Override
+  public boolean isPluginEnabled(final String pluginId) {
+    return server.getPluginManager().getPlugin(pluginId).isPresent();
+  }
 }

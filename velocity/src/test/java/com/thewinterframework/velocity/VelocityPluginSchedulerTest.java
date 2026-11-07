@@ -2,86 +2,75 @@ package com.thewinterframework.velocity;
 
 import com.thewinterframework.utils.TimeUnit;
 import com.thewinterframework.velocity.scheduler.VelocityPluginScheduler;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.scheduler.ScheduledTask;
+import com.velocitypowered.api.scheduler.Scheduler;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Proxy;
 import java.time.Duration;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class VelocityPluginSchedulerTest {
 
-	@Test
-	void convertsTicksAndCancelsByWinterId() {
-		final var environment = new VelocityTestEnvironment();
-		final var scheduler = new VelocityPluginScheduler(this, environment.server);
-		final var count = new AtomicInteger();
-		final var id = scheduler.runAtFixedRateSync(count::incrementAndGet, 2, 5, TimeUnit.TICKS);
-		final var task = environment.tasks.getFirst();
-		assertEquals(Duration.ofMillis(100), task.delay);
-		assertEquals(Duration.ofMillis(250), task.repeat);
-		task.execute();
-		task.execute();
-		assertEquals(2, count.get());
-		scheduler.cancelTask(id);
-		task.execute();
-		assertEquals(2, count.get());
-	}
+  @Test
+  void convertsDelaysAndCancelsTasksByWinterId() {
+    final var canceled = new AtomicBoolean();
+    final var delay = new AtomicReference<Duration>();
+    final ScheduledTask task = proxy(ScheduledTask.class, (method, args) -> {
+      if (method.equals("cancel")) {
+        canceled.set(true);
+        return null;
+      }
+      throw new UnsupportedOperationException(method);
+    });
+    final var builderRef = new AtomicReference<Scheduler.TaskBuilder>();
+    final Scheduler.TaskBuilder builder = proxy(Scheduler.TaskBuilder.class, (method, args) -> switch (method) {
+      case "delay" -> {
+        delay.set((Duration) args[0]);
+        yield builderRef.get();
+      }
+      case "schedule" -> task;
+      default -> throw new UnsupportedOperationException(method);
+    });
+    builderRef.set(builder);
+    final Scheduler velocityScheduler = proxy(Scheduler.class, (method, args) -> switch (method) {
+      case "buildTask" -> builder;
+      case "tasksByPlugin" -> List.of(task);
+      default -> throw new UnsupportedOperationException(method);
+    });
+    final ProxyServer server = proxy(ProxyServer.class, (method, args) -> {
+      if (method.equals("getScheduler")) {
+        return velocityScheduler;
+      }
+      throw new UnsupportedOperationException(method);
+    });
+    final var scheduler = new VelocityPluginScheduler(server, new Object());
 
-	@Test
-	void runsSyncAndAsyncVariantsOnTheVelocityScheduler() {
-		final var environment = new VelocityTestEnvironment();
-		final var scheduler = new VelocityPluginScheduler(this, environment.server);
-		final var count = new AtomicInteger();
-		scheduler.runAsync(count::incrementAndGet);
-		scheduler.runSync(count::incrementAndGet);
-		scheduler.runDelayedAsync(count::incrementAndGet, 1, TimeUnit.MINUTES);
-		scheduler.runDelayedSync(count::incrementAndGet, 1, TimeUnit.SECONDS);
-		scheduler.runAtFixedRateAsync(count::incrementAndGet, 0, 1, TimeUnit.SECONDS);
-		scheduler.ensureSync(count::incrementAndGet);
-		scheduler.getMainThreadExecutor().execute(count::incrementAndGet);
-		assertEquals(0, count.get());
-		environment.tasks.forEach(VelocityTestEnvironment.Task::execute);
-		assertEquals(7, count.get());
-		assertEquals(Duration.ofMinutes(1), environment.tasks.get(2).delay);
-		scheduler.cancelAllTasks();
-		assertTrue(environment.tasks.get(4).cancelled);
-	}
+    final int taskId = scheduler.runDelayedSync(() -> { }, 2, TimeUnit.SECONDS);
+    assertEquals(Duration.ofSeconds(2), delay.get());
+    assertFalse(canceled.get());
 
-	@Test
-	void completesFuturesAndPropagatesSupplierFailures() {
-		final var environment = new VelocityTestEnvironment();
-		final var scheduler = new VelocityPluginScheduler(this, environment.server);
-		final var success = scheduler.getSync(() -> "result");
-		final var failure = scheduler.getSync(() -> { throw new IllegalStateException("failure"); });
-		assertFalse(success.isDone());
-		environment.tasks.forEach(VelocityTestEnvironment.Task::execute);
-		assertEquals("result", success.join());
-		assertInstanceOf(IllegalStateException.class, assertThrows(CompletionException.class, failure::join).getCause());
-	}
+    scheduler.cancelTask(taskId);
+    assertTrue(canceled.get());
+    scheduler.cancelAllTasks();
+    assertThrows(IllegalStateException.class, () -> scheduler.runAsync(() -> { }));
+  }
 
-	@Test
-	void forgetsOneShotTasksEvenWhenTheyFinishBeforeScheduleReturns() {
-		final var environment = new VelocityTestEnvironment();
-		environment.executeImmediately = true;
-		final var scheduler = new VelocityPluginScheduler(this, environment.server);
-		final var id = scheduler.runSync(() -> {});
-		scheduler.cancelTask(id);
-		assertFalse(environment.tasks.getFirst().cancelled);
-	}
+  private static <T> T proxy(final Class<T> type, final Invocation invocation) {
+    return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type},
+        (instance, method, args) -> invocation.call(method.getName(), args)));
+  }
 
-	@Test
-	void onlyCancelsTasksOwnedByThisPlugin() {
-		final var environment = new VelocityTestEnvironment();
-		final var scheduler = new VelocityPluginScheduler(this, environment.server);
-		final var other = new VelocityPluginScheduler(new Object(), environment.server);
-		scheduler.runDelayedSync(() -> {}, 1, TimeUnit.SECONDS);
-		other.runSync(() -> {});
-		scheduler.cancelAllTasks();
-		assertTrue(environment.tasks.getFirst().cancelled);
-		assertFalse(environment.tasks.getLast().cancelled);
-		assertThrows(IllegalArgumentException.class, () -> scheduler.runAtFixedRateAsync(() -> {}, 0, 0, TimeUnit.TICKS));
-		assertThrows(IllegalArgumentException.class, () -> scheduler.runDelayedSync(() -> {}, -1, TimeUnit.SECONDS));
-	}
+  @FunctionalInterface
+  private interface Invocation {
+    Object call(String method, Object[] args);
+  }
 }

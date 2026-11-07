@@ -7,32 +7,32 @@ import java.text.DecimalFormat;
  */
 public class NumberUtils {
 
-	/**
-	 * Format a number with a specific number of decimals.
-	 * @param number The number to format.
-	 * @param decimals The number of decimals to format the number with.
-	 * @return The formatted number.
-	 */
-	public static String formatNumber(final double number, final int decimals) {
-		final var pattern = new StringBuilder("0");
-		if (decimals > 0) {
-			pattern.append(".");
-			pattern.append("0".repeat(decimals));
-		}
-		final var decimalFormat = new DecimalFormat(pattern.toString());
-		return decimalFormat.format(number);
-	}
+  /**
+   * Format a number with a specific number of decimals.
+   * @param number The number to format.
+   * @param decimals The number of decimals to format the number with.
+   * @return The formatted number.
+   */
+  public static String formatNumber(final double number, final int decimals) {
+    final var pattern = new StringBuilder("0");
+    if (decimals > 0) {
+      pattern.append(".");
+      pattern.append("0".repeat(decimals));
+    }
+    final var decimalFormat = new DecimalFormat(pattern.toString());
+    return decimalFormat.format(number);
+  }
 
-	/**
-	 * Abbreviate a number to a more readable format. For example, 1000 becomes 1k.
-	 * @param number The number to abbreviate.
-	 * @return The abbreviated number.
-	 */
-	public static String abbreviateNumber(final long number) {
-		if (number < 1000) return String.valueOf(number);
-		final var exp = (int) (Math.log(number) / Math.log(1000));
-		final var suffix = "kMBTPE".charAt(exp - 1);
-		return String.format("%.1f%c", number / Math.pow(1000, exp), suffix);
-	}
+  /**
+   * Abbreviate a number to a more readable format. For example, 1000 becomes 1k.
+   * @param number The number to abbreviate.
+   * @return The abbreviated number.
+   */
+  public static String abbreviateNumber(final long number) {
+    if (number < 1000) return String.valueOf(number);
+    final var exp = (int) (Math.log(number) / Math.log(1000));
+    final var suffix = "kMBTPE".charAt(exp - 1);
+    return String.format("%.1f%c", number / Math.pow(1000, exp), suffix);
+  }
 
 }

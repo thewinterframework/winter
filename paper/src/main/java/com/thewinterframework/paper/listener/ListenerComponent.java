@@ -1,6 +1,9 @@
 package com.thewinterframework.paper.listener;
 
-import com.google.inject.ScopeAnnotation;
+import com.thewinterframework.component.annotation.Component;
+import com.thewinterframework.component.annotation.HandledBy;
+import com.thewinterframework.component.annotation.SyncLoading;
+import com.thewinterframework.paper.listener.handler.ListenerComponentHandler;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,6 +15,9 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@ScopeAnnotation
+@Component
+@HandledBy(ListenerComponentHandler.class)
+@SyncLoading
+@Deprecated(forRemoval = false)
 public @interface ListenerComponent {
 }

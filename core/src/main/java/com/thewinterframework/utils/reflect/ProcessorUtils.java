@@ -1,48 +1,51 @@
 package com.thewinterframework.utils.reflect;
 
+import com.thewinterframework.processor.config.WinterProperties;
+
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import java.util.Locale;
 
 public final class ProcessorUtils {
-	private ProcessorUtils() {
-	}
+  private ProcessorUtils() {
+  }
 
-	public enum ProjectType {
-		API,
-		IMPL
-	}
+  public enum ProjectType {
+    API,
+    IMPL
+  }
 
-	public static ProjectType getProjectType(final ProcessingEnvironment env) {
-		final var typeRaw = env.getOptions().getOrDefault("plugin.type", "IMPL");
-		return ProjectType.valueOf(typeRaw.toUpperCase());
-	}
+  public static ProjectType getProjectType(final ProcessingEnvironment env) {
+    final var typeRaw = WinterProperties.load(env).get("winter.project.type", "plugin.type", "IMPL");
+    return ProjectType.valueOf(typeRaw.toUpperCase(Locale.ROOT));
+  }
 
-	public static boolean isChild(final TypeMirror child, final String rootQualifiedName) {
-		final var childType = (DeclaredType) child;
-		final var childElement = (TypeElement) childType.asElement();
+  public static boolean isChild(final TypeMirror child, final String rootQualifiedName) {
+    final var childType = (DeclaredType) child;
+    final var childElement = (TypeElement) childType.asElement();
 
-		return childElement.getInterfaces().stream()
-				.map(interfaces -> (DeclaredType) interfaces)
-				.map(DeclaredType::asElement)
-				.map(TypeElement.class::cast)
-				.map(TypeElement::getQualifiedName)
-				.map(Name::toString)
-				.anyMatch(name -> name.equals(rootQualifiedName));
-	}
+    return childElement.getInterfaces().stream()
+        .map(interfaces -> (DeclaredType) interfaces)
+        .map(DeclaredType::asElement)
+        .map(TypeElement.class::cast)
+        .map(TypeElement::getQualifiedName)
+        .map(Name::toString)
+        .anyMatch(name -> name.equals(rootQualifiedName));
+  }
 
-	public static boolean isChild(final TypeMirror child, final TypeMirror root) {
-		final var rootType = (DeclaredType) root;
-		final var rootElement = (TypeElement) rootType.asElement();
-		final var rootQualifiedName = rootElement.getQualifiedName().toString();
+  public static boolean isChild(final TypeMirror child, final TypeMirror root) {
+    final var rootType = (DeclaredType) root;
+    final var rootElement = (TypeElement) rootType.asElement();
+    final var rootQualifiedName = rootElement.getQualifiedName().toString();
 
-		return isChild(child, rootQualifiedName);
-	}
+    return isChild(child, rootQualifiedName);
+  }
 
-	public static Element asElement(final ProcessingEnvironment env, final Class<?> type) {
-		return env.getElementUtils().getTypeElement(type.getCanonicalName());
-	}
+  public static Element asElement(final ProcessingEnvironment env, final Class<?> type) {
+    return env.getElementUtils().getTypeElement(type.getCanonicalName());
+  }
 }
