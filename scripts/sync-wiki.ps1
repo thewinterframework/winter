@@ -45,6 +45,7 @@ $sidebar = @'
 - [Conditions and decorators](conditions-and-decorators)
 - [Scheduling](scheduling)
 - [Paper integration](paper-and-yaml)
+- [Velocity integration](velocity)
 - [Text and utilities](utilities)
 - [Extension points](extensions)
 - [API map](api-reference)

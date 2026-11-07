@@ -1,6 +1,6 @@
 # Scheduling
 
-`WinterPlugin.getScheduler()` returns `PluginScheduler`. Paper implements it through Bukkit's scheduler and cancels all plugin tasks during disable.
+`WinterPlugin.getScheduler()` returns `PluginScheduler`. Paper implements it through Bukkit's scheduler; Velocity uses its proxy scheduler. Both cancel plugin tasks during disable. Velocity has no main scheduler thread, so its sync and async scheduling variants both use Velocity's asynchronous scheduler. `ensureSync`, `getSync`, and `getMainThreadExecutor` execute on the caller's thread on Velocity. See [Velocity integration](velocity.md).
 
 ## Direct scheduler API
 

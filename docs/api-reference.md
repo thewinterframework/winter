@@ -1,22 +1,23 @@
 # API map
 
-This page maps the public entry points in Winter 3. For exact overloads and return types, build Javadocs with `./gradlew :core:javadoc :paper:javadoc`.
+This page maps the public entry points in Winter 3. For exact overloads and return types, build Javadocs with `./gradlew :core:javadoc :paper:javadoc :velocity:javadoc`.
 
 | Area | Main types | Purpose |
 | --- | --- | --- |
-| Boot | `WinterBootPlugin`, `WinterPlugin`, `PaperWinterPlugin` | Identify the plugin and own platform lifecycle. |
+| Boot | `WinterBootPlugin`, `WinterPlugin`, `PaperWinterPlugin`, `VelocityWinterPlugin` | Identify the plugin and own platform lifecycle. |
 | Modules | `PluginModule`, `PluginModuleManager`, `ProcessorModule` | Register Guice modules and run module lifecycle/dependencies. |
 | Components | `Component`, `ComponentDescriptor`, `ComponentContext`, `ComponentManager`, `ComponentModule` | Discover, describe, bind, and run components. |
 | Metadata | `ComponentPriority`, `LoadAfter`, `LoadBefore`, `SyncLoading`, `External`, `HandledBy`, `InterceptedBy` | Control ordering, threads, exports, and extensions. |
 | Admission | `ComponentDecision`, `ComponentPhase`, `ComponentInterceptor`, `ComponentCompileInterceptor` | Admit/discard and observe component phases. |
 | Handlers | `ComponentHandler`, `ComponentDecorator`, `ComponentDecoratorHandler` | Add component roles and annotation-driven behavior. |
-| Plugin interception | `PluginPhase`, `PluginLifecycleInterceptor`, `PluginLifecycle` | Observe the full Paper plugin startup/shutdown pipeline. |
+| Plugin interception | `PluginPhase`, `PluginLifecycleInterceptor`, `PluginLifecycle` | Observe the platform plugin startup/shutdown pipeline. |
 | Processor extension | `WinterProcessorExtension`, `ProcessorContext`, `WinterAnnotationProcessor` | Add compile-time generators and wire modules. |
 | Conditions | `Requires`, `ComponentCondition`, `ConditionContext`, `RequiresPlugin`, `RequiresExpr`, `Stage` | Gate LOAD or ENABLE work. |
 | DI and exports | `Primary`, `ProviderComponent`, `Expose`, `ExternalBindingsModule`, `DataFolder`, `ReloadServiceManager` | Bind contracts, providers, exported APIs, and reload hooks. |
-| Scheduling | `PluginScheduler`, `PaperPluginScheduler`, `RepeatingTask`, `ScheduledAt`, `TimeUnit` | Submit tasks or annotate timed component methods. |
+| Scheduling | `PluginScheduler`, `PaperPluginScheduler`, `VelocityPluginScheduler`, `RepeatingTask`, `ScheduledAt`, `TimeUnit` | Submit tasks or annotate timed component methods. |
 | Lifecycle methods | `OnEnable`, `OnDisable`, `OnReload` | Invoke component methods at plugin lifecycle points. |
 | Paper | `ListenerComponent`, `YamlConfig`, `FileName`, `PaperPlatform` | Register listeners and bind file-backed YAML. |
+| Velocity | `VelocityPlatform` | Look up loaded proxy plugins by ID. |
 | Presentation | `ComponentUtils`, `ComponentJoiner`, `ComponentResolver`, `Tags` | Parse, join, and resolve Adventure text. |
 | Expressions | `ExpressionResolver`, `JexlExpressionResolver`, `Converter` | Resolve strings against plugin contexts and convert values. |
 

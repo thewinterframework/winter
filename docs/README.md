@@ -19,6 +19,7 @@ Maintainers can copy these pages into a local wiki checkout with `pwsh scripts/s
 - [Conditions and decorators](conditions-and-decorators.md): conditional components and method annotations.
 - [Scheduling](scheduling.md): scheduler API, timed methods, and tick conversion.
 - [Paper integration](paper-and-yaml.md): listeners, YAML configuration, and platform behavior.
+- [Velocity integration](velocity.md): proxy lifecycle, Guice, tasks, and plugin setup.
 - [Text, expressions, and utilities](utilities.md): Adventure text, JEXL, and common helpers.
 
 ## Extend and maintain Winter
@@ -28,4 +29,4 @@ Maintainers can copy these pages into a local wiki checkout with `pwsh scripts/s
 - [Migration to 3.0](migration.md): changes from the legacy component model.
 - [Troubleshooting](troubleshooting.md): build, class loading, injection, and thread issues.
 
-For class and method signatures, build the Javadocs with `./gradlew :core:javadoc :paper:javadoc` (or `gradlew.bat` on Windows). This documentation focuses on behavior, integration, and examples.
+For class and method signatures, build the Javadocs with `./gradlew :core:javadoc :paper:javadoc :velocity:javadoc` (or `gradlew.bat` on Windows). This documentation focuses on behavior, integration, and examples.

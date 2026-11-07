@@ -1,8 +1,10 @@
 # The Winter Framework 3.0
 
-Winter provides compile-time discovery, Guice injection, and a managed lifecycle for Java 21 Paper plugins. Its component model supports library and multi-module projects.
+Winter provides compile-time discovery, Guice injection, and a managed lifecycle for Java 21 Paper and Velocity plugins. Its component model supports library and multi-module projects.
 
 Read the [complete documentation](docs/README.md) for setup, configuration, components, lifecycle, Guice, exported APIs, scheduling, Paper integration, extension points, migration, and troubleshooting. The same guides are available in the [project wiki](https://github.com/thewinterframework/winter/wiki).
+
+Velocity plugins use the `velocity` artifact and [Velocity integration guide](docs/velocity.md). The example below shows Paper setup.
 
 ## Setup
 

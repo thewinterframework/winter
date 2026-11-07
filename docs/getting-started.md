@@ -1,6 +1,6 @@
 # Getting started
 
-Winter 3 targets Java 21 and Paper. The repository publishes `core` and `paper`; the Paper artifact exposes the core API. Use the same Winter version for ordinary compilation and annotation processing.
+Winter 3 targets Java 21 and supports Paper and Velocity. The repository publishes `core`, `paper`, and `velocity`; each platform artifact exposes the core API. This page shows Paper setup. For a proxy plugin, use [Velocity integration](velocity.md). Use the same Winter version for ordinary compilation and annotation processing.
 
 ## Gradle setup
 

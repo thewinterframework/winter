@@ -22,10 +22,10 @@ flowchart LR
 
 ## Runtime pipeline
 
-`PaperWinterPlugin` scans generated module classes, loads them, creates a Guice injector, injects modules and the plugin, enables modules, and later disables them. `PluginModuleManager` resolves module dependencies and runs independent module work in parallel. `ComponentModule` resolves component order, applies conditions and admission policies, binds accepted components as singletons, creates their instances, and invokes handlers/decorators.
+`PaperWinterPlugin` and `VelocityWinterPlugin` scan generated module classes, load them, create a Guice injector, inject modules and the plugin, enable modules, and later disable them. Paper runs these phases across its plugin load and enable callbacks; Velocity runs them from `ProxyInitializeEvent`. `PluginModuleManager` resolves module dependencies and runs independent module work in parallel. `ComponentModule` resolves component order, applies conditions and admission policies, binds accepted components as singletons, creates their instances, and invokes handlers/decorators.
 
 Generated metadata is an input to startup, so a library used by a consumer must be on both the compile and annotation processor paths. External classes must also be visible to the consumer's runtime class loader. See [Exposed APIs and multi-module builds](expose-and-multi-module.md).
 
 ## Ownership
 
-`core` contains the component model, processors, Guice integration, scheduler interface, text helpers, and extension points. `paper` supplies the Paper boot class, Bukkit scheduler, listeners, and YAML integration. Addons should depend on these public entry points rather than generated implementation classes or internal metadata processors.
+`core` contains the component model, processors, Guice integration, scheduler interface, text helpers, and extension points. `paper` supplies the Paper boot class, Bukkit scheduler, listeners, and YAML integration. `velocity` supplies the Velocity boot class, proxy scheduler, and plugin lookup. Addons should depend on these public entry points rather than generated implementation classes or internal metadata processors.
