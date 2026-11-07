@@ -16,7 +16,8 @@ foreach ($file in Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.md' -Fi
   }
   $content = Get-Content -LiteralPath $file.FullName -Raw
   $content = [regex]::Replace($content, $linkPattern, '](${page}${fragment})')
-  Set-Content -LiteralPath (Join-Path $targetDirectory $file.Name) -Value $content -Encoding utf8
+  $content = ($content -replace '(\r?\n)+$', '') + "`n"
+  Set-Content -LiteralPath (Join-Path $targetDirectory $file.Name) -Value $content -Encoding utf8 -NoNewline
 }
 
 $wikiHomeContent = Get-Content -LiteralPath (Join-Path $sourceDirectory 'README.md') -Raw
@@ -27,7 +28,8 @@ if ($sectionStart -lt 0) {
 $wikiHomeContent = "# Winter 3 Wiki`n`nThese pages mirror the versioned guides in the 3.0.0 branch's docs directory.`n`n" +
     $wikiHomeContent.Substring($sectionStart)
 $wikiHomeContent = [regex]::Replace($wikiHomeContent, $linkPattern, '](${page}${fragment})')
-Set-Content -LiteralPath (Join-Path $targetDirectory 'Home.md') -Value $wikiHomeContent -Encoding utf8
+$wikiHomeContent = ($wikiHomeContent -replace '(\r?\n)+$', '') + "`n"
+Set-Content -LiteralPath (Join-Path $targetDirectory 'Home.md') -Value $wikiHomeContent -Encoding utf8 -NoNewline
 
 $sidebar = @'
 **Winter 3**
@@ -49,6 +51,6 @@ $sidebar = @'
 - [Migration to 3.0](migration)
 - [Troubleshooting](troubleshooting)
 '@
-Set-Content -LiteralPath (Join-Path $targetDirectory '_Sidebar.md') -Value $sidebar -Encoding utf8
+Set-Content -LiteralPath (Join-Path $targetDirectory '_Sidebar.md') -Value ($sidebar + "`n") -Encoding utf8 -NoNewline
 
 Write-Output "Synced $((Get-ChildItem -LiteralPath $targetDirectory -Filter '*.md' -File).Count) wiki pages to $targetDirectory"
