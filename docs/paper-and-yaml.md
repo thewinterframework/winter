@@ -18,6 +18,14 @@ public final class JoinListener implements Listener {
 
 The listener handler registers accepted Bukkit `Listener` components when enabled. Bukkit listener classes are marked synchronous for lifecycle loading. The legacy `@ListenerComponent` annotation is still available as a deprecated stereotype.
 
+## Scheduling on Paper and Folia
+
+Winter uses the global-region and async schedulers on both Paper and Folia. The sync scheduling methods, `ensureSync`, `getSync`, and `getMainThreadExecutor` target the global region. They do not provide ownership of arbitrary worlds or entities on Folia: use `RegionScheduler` for a location and `Entity#getScheduler()` for an entity. Adopting these schedulers does not automatically make a plugin Folia-compatible.
+
+Task IDs returned by Winter belong to its scheduler adapter; cancel them through `PluginScheduler.cancelTask`, not Bukkit's scheduler. Async delays use wall-clock time, with ticks converted at 50 ms per tick. Sync delays follow global ticks. Completed one-shot tasks and cancelled tasks are removed from the adapter's registry.
+
+See [Paper's Folia support guide](https://docs.papermc.io/paper/dev/folia-support/).
+
 ## YAML files
 
 Place `messages.yml` in the plugin jar and request a `YamlConfig` with the `@FileName` qualifier:
